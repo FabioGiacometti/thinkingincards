@@ -1,0 +1,22 @@
+<!doctype html><style>.cards-logo{width:456px;height:240px}</style><body style="margin:60px"><a class="brand" href="#x"><img class="cards-logo" src="assets/cards-wave.svg" alt="CARDS"></a><pre id=o>pending</pre>
+<script type="module" src="logo.js"></script>
+<script>
+const log=[];const fmt=s=>s?s.replace(/translate\(([-\d.]+)px,([-\d.]+)px\) rotate\(([-\d.]+)deg\)/,(m,x,y,r)=>`x${(+x).toFixed(1)} y${(+y).toFixed(1)} r${(+r).toFixed(0)}`):'rest';
+const snap=l=>log.push(l.padEnd(22)+[...document.querySelectorAll('.cw-lift')].reverse().map(g=>fmt(g.style.transform)).join(' | '));
+const fire=(type,el,x,y,id=1)=>el.dispatchEvent(new PointerEvent(type,{clientX:x,clientY:y,bubbles:true,pointerId:id,isPrimary:true}));
+const center=k=>{const r=document.querySelector('.cw-'+k+' .cw-l').getBoundingClientRect();return [r.left+r.width/2,r.top+r.height/2]};
+const strike=(k,dx,dy,label,at)=>setTimeout(()=>{const [x,y]=center(k);for(let i=-3;i<=3;i++)setTimeout(()=>{const px=x+i*dx,py=y+i*dy;fire('pointermove',document.elementFromPoint(px,py)||document.body,px,py)},(i+3)*4);setTimeout(()=>snap(label),90)},at);
+setTimeout(()=>{
+  log.push('order: C | A | R | D | S');
+  strike('r',60,0,'sweep left→right',100);
+  strike('d',0,-45,'D hit from below',1700);
+  strike('a',0,45,'A hit from above',3300);
+  setTimeout(()=>{const [x,y]=center('c');fire('pointermove',document.body,x,y);
+    fire('pointerdown',document.elementFromPoint(x,y),x,y,2);
+    for(let i=1;i<=10;i++)setTimeout(()=>fire('pointermove',document.querySelector('svg.cards-logo'),x-i*25,y+i*15,2),i*16);
+    setTimeout(()=>{snap('C stretched down-left');fire('pointerup',document.querySelector('svg.cards-logo'),x-250,y+150,2)},220);
+    setTimeout(()=>snap('C released +80ms'),300);
+  },4900);
+  setTimeout(()=>{snap('final (3s later)');document.getElementById('o').textContent=log.join('\n')},8500);
+},1600);
+</script></body>
