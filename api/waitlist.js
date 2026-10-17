@@ -16,7 +16,8 @@ export default async function handler(request, response) {
   }
 
   const apiKey = process.env.RESEND_API_KEY
-  const from = process.env.RESEND_FROM_EMAIL
+  const domain = process.env.RESEND_EMAIL_DOMAIN?.trim().replace(/^@/, '')
+  const from = process.env.RESEND_FROM_EMAIL?.trim() || (domain ? `Thinking in CARDS <waitlist@${domain}>` : '')
   if (!apiKey || !from) {
     return response.status(503).json({ message: 'The waitlist is unavailable right now. Please try again shortly.' })
   }

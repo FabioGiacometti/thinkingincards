@@ -64,6 +64,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   if (!process.env.RESEND_API_KEY && env.RESEND_API_KEY) process.env.RESEND_API_KEY = env.RESEND_API_KEY
   if (!process.env.RESEND_FROM_EMAIL && env.RESEND_FROM_EMAIL) process.env.RESEND_FROM_EMAIL = env.RESEND_FROM_EMAIL
+  if (!process.env.RESEND_EMAIL_DOMAIN && env.RESEND_EMAIL_DOMAIN) process.env.RESEND_EMAIL_DOMAIN = env.RESEND_EMAIL_DOMAIN
 
   return {
     plugins: [waitlistDevApi()],

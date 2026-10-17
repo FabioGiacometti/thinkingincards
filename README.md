@@ -24,7 +24,7 @@ The production output is `dist/`. For Vercel use the Vite preset, build command 
 
 ## Waitlist email
 
-The waitlist form posts to `api/waitlist.js`, which sends a signup notification through Resend to the site inbox. The Resend Vercel integration provides `RESEND_API_KEY`. Set `RESEND_FROM_EMAIL` in the Vercel project environment variables to a sender address on a verified Resend domain, for example `Thinking in CARDS <waitlist@your-verified-domain.com>`. For local development, put both variables in `.env.local`; the Vite dev server runs the same API handler locally.
+The waitlist form posts to `api/waitlist.js`, which sends a signup notification through Resend to the site inbox. The Vercel Resend integration provides `RESEND_API_KEY` and `RESEND_EMAIL_DOMAIN`; the handler sends from `Thinking in CARDS <waitlist@your-domain>` by default. Set `RESEND_FROM_EMAIL` only if you want to override that sender. For local development, copy `RESEND_API_KEY` and `RESEND_EMAIL_DOMAIN` from the Vercel project settings into `.env.local`; the Vite dev server runs the same API handler locally. Restart the dev server after changing `.env.local`.
 
 ## Files
 
