@@ -22,6 +22,10 @@ npm run preview
 
 The production output is `dist/`. For Vercel use the Vite preset, build command `npm run build`, and output directory `dist`.
 
+## Waitlist email
+
+The waitlist form posts to `api/waitlist.js`, which sends a signup notification through Resend to the site inbox. The Resend Vercel integration provides `RESEND_API_KEY`. Set `RESEND_FROM_EMAIL` in the Vercel project environment variables to a sender address on a verified Resend domain, for example `Thinking in CARDS <waitlist@your-verified-domain.com>`. For local development, put both variables in `.env.local`; the Vite dev server runs the same API handler locally.
+
 ## Files
 
 - `index.html`: layout, styles, and interactive example.
@@ -32,4 +36,4 @@ The production output is `dist/`. For Vercel use the Vite preset, build command 
 - `assets/product-film.mp4`: supplied product film.
 - `assets/product-film-poster.jpg`: poster extracted from the film.
 
-Static site; no API keys, backend, or environment variables required. This project contains the landing only. It does not contain the modeling application.
+This project contains the landing only. It does not contain the modeling application.
