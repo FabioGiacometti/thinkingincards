@@ -30,7 +30,8 @@ The waitlist form posts to `api/waitlist.js`, which sends a signup notification 
 
 - `index.html`: layout, styles, and interactive example.
 - `terms.html`: Terms of Service and User Agreement (linked from the footer).
-- `vite.config.mjs`: builds both pages.
+- `privacy.html`: Privacy Policy. Built and linked from the footers only when `PUBLISH_PRIVACY=true` (see `CHANGELOG.md`).
+- `vite.config.mjs`: builds the pages and controls whether the Privacy Policy is published.
 - `assets/cards.svg`: supplied CARDS wordmark.
 - `assets/cards-wave.svg`: the same wordmark with a small letter wave every 7 seconds (used in the header; respects reduced motion).
 - `assets/product-film.mp4`: supplied product film.
