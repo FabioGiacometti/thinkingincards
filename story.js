@@ -115,7 +115,7 @@ function build(world) {
 
   // Map lines + nodes
   const lines = svg('map-lines')
-  lines.innerHTML = '<defs><marker id="map-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 1 L9 5 L0 9 z" fill="#9aa7bd"/></marker></defs>'
+  lines.innerHTML = '<defs><marker id="map-arrow" viewBox="0 0 10 10" refX="9.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0.8 L10 5 L0 9.2 L2.2 5 z"/></marker></defs>'
   const nodes = {}
   MAP_LINKS.forEach(([a, as, b, bs, text], i) => {
     const path = document.createElementNS(svgNS, 'path'), step = smoothStep(anchor(a, as), anchor(b, bs))

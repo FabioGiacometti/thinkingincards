@@ -41,7 +41,7 @@ main:has(.story){overflow:clip}
 
 /* Map */
 .map-lines{position:absolute;left:0;top:0;width:1200px;height:1000px;overflow:visible;pointer-events:none}
-.map-lines path{fill:none;stroke:#9aa7bd;stroke-width:1.6;stroke-linejoin:round}.map-lines{transition:opacity .6s var(--ease)}
+.map-lines path{fill:none;stroke:#9aa7bd;stroke-width:1.6;stroke-linejoin:round}.map-lines marker path{fill:#9aa7bd;stroke:none}.map-lines{transition:opacity .6s var(--ease)}
 .map-node{position:absolute;width:172px;height:52px;margin:-26px 0 0 -86px;border-radius:10px;background:#fff;border:1px solid #e2e6ee;
   display:flex;flex-direction:column;justify-content:center;padding:0 16px;color:#111827;
   box-shadow:0 1px 2px rgba(11,13,18,.05),0 6px 16px rgba(11,13,18,.04);transition:opacity .6s var(--ease),transform var(--t) var(--ease)}
