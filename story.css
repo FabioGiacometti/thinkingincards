@@ -228,8 +228,20 @@ main:has(.story){overflow:clip}
 /* Step 04: the team's notes around the model */
 .sticky{position:absolute;width:176px;padding:12px 14px 14px;border-radius:3px;transform:rotate(var(--tilt,0deg));
   box-shadow:0 1px 1px rgba(11,13,18,.08),0 10px 22px rgba(11,13,18,.10);color:#1f2937;
-  transition:opacity .45s var(--ease),transform .45s var(--ease);z-index:3}
-.sticky.is-off{transform:rotate(var(--tilt,0deg)) translateY(-10px)}
+  transition:opacity .35s ease;z-index:3}
+/* Stuck on like a post-it: it arrives lifted (bigger, tilted, long shadow), is pressed down and settles */
+@keyframes sticky-on{
+  0%{opacity:0;transform:translateY(-28px) rotate(calc(var(--tilt,0deg) + 7deg)) scale(1.16);
+    box-shadow:0 2px 2px rgba(11,13,18,.04),0 30px 44px rgba(11,13,18,.18)}
+  55%{opacity:1;transform:translateY(2px) rotate(calc(var(--tilt,0deg) - .8deg)) scale(.975);
+    box-shadow:0 1px 1px rgba(11,13,18,.10),0 4px 8px rgba(11,13,18,.08)}
+  78%{transform:translateY(-1px) rotate(calc(var(--tilt,0deg) + .3deg)) scale(1.008)}
+  100%{opacity:1;transform:rotate(var(--tilt,0deg)) scale(1);
+    box-shadow:0 1px 1px rgba(11,13,18,.08),0 10px 22px rgba(11,13,18,.10)}
+}
+.sticky.is-in{animation:sticky-on .7s cubic-bezier(.22,.8,.32,1) both}
+.step-still .sticky{animation:none !important}
+@media (prefers-reduced-motion:reduce){.story:not(.force-motion) .sticky{animation:none !important}}
 .sticky span{display:block;font:700 9.5px/1 "Helvetica Neue",Helvetica,Arial,sans-serif;letter-spacing:1.2px;text-transform:uppercase;opacity:.6;margin-bottom:8px}
 .sticky p{margin:0;font:500 13.5px/1.35 "Helvetica Neue",Helvetica,Arial,sans-serif;color:#1f2937}
 .sticky-yellow{background:#fef3c7}.sticky-pink{background:#fce7f3}.sticky-blue{background:#dbeafe}.sticky-green{background:#dcfce7}

@@ -469,7 +469,17 @@ function render(step, parts, world, stage, chromeCrumb, roles) {
   realSlot.classList.toggle('is-waiting', step === 3 && !flyer.classList.contains('is-off'))
 
   world.classList.toggle('can-sort', step === 2 || step === 3)
-  parts.stickies.forEach((st, i) => { st.classList.toggle('is-off', step !== 4); st.style.transitionDelay = step === 4 ? `${0.35 + i * 0.12}s` : '0s' })
+  // Each note is stuck on in turn, like a post-it pressed onto the board
+  parts.stickies.forEach((st, i) => {
+    const on = step === 4
+    st.classList.toggle('is-off', !on)
+    if (on && !st.classList.contains('is-in')) {
+      st.style.animationDelay = `${0.5 + i * 0.6}s`
+      void st.offsetWidth // restart the animation each time the step is entered
+      st.classList.add('is-in')
+    }
+    if (!on) st.classList.remove('is-in')
+  })
   world.classList.toggle('mode-actions', step === 5)
   world.classList.toggle('mode-dim', step >= 6)
   for (const [id, c] of Object.entries(cols)) c.classList.toggle('is-source', id === 'order')
