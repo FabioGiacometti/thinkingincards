@@ -307,12 +307,25 @@ function init() {
   const parts = build(world)
   parts.step = 0
 
+  // Reduced motion (without the review switch): fade the stage out, change the frame, fade it back in
+  const gentle = () => matchMedia('(prefers-reduced-motion: reduce)').matches && !story.classList.contains('force-motion')
+  let swap = 0
   const go = (n) => {
     if (n === parts.step && world.dataset.ready) return
     parts.step = n
     steps.forEach((s, i) => s.classList.toggle('is-active', i === n))
-    render(n, parts, world, stage, crumb, roles)
-    world.dataset.ready = '1'
+    if (!gentle() || !world.dataset.ready) {
+      render(n, parts, world, stage, crumb, roles)
+      world.dataset.ready = '1'
+      return
+    }
+    const ticket = ++swap
+    stage.classList.add('is-swapping')
+    setTimeout(() => {
+      if (ticket !== swap) return
+      render(parts.step, parts, world, stage, crumb, roles)
+      requestAnimationFrame(() => stage.classList.remove('is-swapping'))
+    }, 220)
   }
   // The step whose middle crosses the reading line is the active one
   const mobile = window.matchMedia('(max-width: 900px)')

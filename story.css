@@ -142,7 +142,10 @@ main:has(.story){overflow:clip}
 
 /* Reduced motion: every step shows its final frame, without movement */
 @media (prefers-reduced-motion:reduce){
-  .story:not(.force-motion) *, .story:not(.force-motion){transition:none !important}
+  /* Gentle version: nothing moves or zooms, the stage just fades between steps */
+  .story:not(.force-motion) *, .story:not(.force-motion){transition:opacity .3s ease !important}
+  .story:not(.force-motion) .story-stage{transition:opacity .22s ease !important}
+  .story:not(.force-motion) .story-stage.is-swapping{opacity:0}
 }
 
 /* Review switch (?motion=1): the landing's own reduced-motion rule removes every transition with
