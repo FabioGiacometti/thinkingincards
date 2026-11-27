@@ -25,6 +25,7 @@ const OBJECTS = [
   { id: 'provider', name: 'Provider', cards: [
     ['attribute', 'Name', 'text'], ['attribute', 'Email', 'text'], ['attribute', 'Lead time', 'days'],
     ['metadata', 'Status', 'enum'], ['cta', 'Contact provider'],
+    ['nested', 'Product', 'many', 'product'],
   ] },
   { id: 'payment', name: 'Payment', cards: [
     ['attribute', 'Amount', 'money'], ['attribute', 'Date', 'date'],
@@ -127,7 +128,7 @@ const STICKIES = [
   { who: 'Product manager', text: 'Can a Client have more than one open Order?', color: 'yellow', x: 40, y: 448, tilt: -2.5 },
   { who: 'Designer', text: 'Payment shows inside the Order. Does it need a page of its own?', color: 'pink', x: 270, y: 452, tilt: 1.8 },
   { who: 'Engineer', text: 'Is Stock per Product, or per warehouse?', color: 'blue', x: 520, y: 486, tilt: -1.2 },
-  { who: 'Operations', text: 'Lead time decides when we reorder from a Provider.', color: 'green', x: 760, y: 378, tilt: 2.2 },
+  { who: 'Operations', text: 'Lead time decides when we reorder from a Provider.', color: 'green', x: 760, y: 414, tilt: 2.2 },
   { who: 'Finance', text: 'Can we refund part of a Payment, or only all of it?', color: 'purple', x: 990, y: 384, tilt: -1.8 },
 ]
 
@@ -148,17 +149,17 @@ const CAMERA_MOBILE = {
   0: { x: 40, y: 175, w: 900, h: 250 },
   4: { x: 10, y: 100, w: 720, h: 530 },
   5: { x: 10, y: 90, w: 720, h: 420 },
-  6: { x: 40, y: 560, w: 760, h: 320 },
+  6: { x: 50, y: 575, w: 1010, h: 285 },
   7: { x: 60, y: 540, w: 600, h: 370 },
 }
 const CRUMB = ['Commerce', 'Commerce · Objects', 'Commerce · Objects', 'Commerce · Objects', 'Commerce · Objects',
   'Commerce · Access', 'Commerce · Views', 'Commerce · Screens']
 
-// Views of the Order (step 6) and where they land in the two screens (step 7).
+// Views of a Product (step 6) and where they land in the two screens (step 7).
 const VIEWS = {
-  row: { s6: { x: 70, y: 640, w: 330, h: 44 }, s7: { x: 96, y: 640, w: 300, h: 44 } },
-  detail: { s6: { x: 450, y: 600, w: 290, h: 230 }, s7: { x: 410, y: 614, w: 220, h: 230 } },
-  summary: { s6: { x: 800, y: 620, w: 300, h: 132 }, s7: { x: 722, y: 614, w: 376, h: 132 } },
+  row: { s6: { x: 70, y: 650, w: 330, h: 44 }, s7: { x: 96, y: 646, w: 300, h: 44 } },
+  detail: { s6: { x: 450, y: 610, w: 290, h: 230 }, s7: { x: 414, y: 606, w: 220, h: 236 } },
+  summary: { s6: { x: 830, y: 610, w: 210, h: 230 }, s7: { x: 724, y: 606, w: 180, h: 236 } },
 }
 
 const el = (tag, cls, html) => { const n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n }
@@ -244,22 +245,23 @@ function build(world, uid = '') {
   for (const n of cols.product.querySelectorAll('.card:not(.ghost-card):not(.nested)')) flyer.querySelector('.col-cards').append(n.cloneNode(true))
   world.append(flyer)
 
-  // Views
+  // Views: right-angled dashed links from the Product object to each of its views
   const viewLinks = svg('view-links')
-  const order = byId.order, ox = colX(order.index) + COL_W / 2, oy = BOARD_Y + colHeight(order)
+  const source = byId.product, ox = colX(source.index) + COL_W / 2, oy = BOARD_Y + colHeight(source)
   for (const v of Object.values(VIEWS)) {
-    const p = document.createElementNS(svgNS, 'path'), tx = v.s6.x + v.s6.w / 2, ty = v.s6.y - 26
-    p.setAttribute('d', `M${ox} ${oy} C ${ox} ${oy + 60}, ${tx} ${ty - 60}, ${tx} ${ty}`)
+    const p = document.createElementNS(svgNS, 'path'), tx = v.s6.x + v.s6.w / 2, ty = v.s6.y - 28, my = oy + 40
+    p.setAttribute('d', roundedPath([{ x: ox, y: oy }, { x: ox, y: my }, { x: tx, y: my }, { x: tx, y: ty }], 12))
     viewLinks.append(p)
   }
   world.append(viewLinks)
   const labels = {
-    row: el('div', 'view-label', 'In a list'), detail: el('div', 'view-label', 'As a detail'), summary: el('div', 'view-label', 'As a summary'),
+    row: el('div', 'view-label', 'In a list'), detail: el('div', 'view-label', 'As a detail'), summary: el('div', 'view-label', 'In the shop'),
   }
+  const thumb = '<i class="thumb"></i>'
   const views = {
-    row: el('div', 'view', `<div class="row"><b>#1042</b><span>Ana Ruiz</span><span class="sp"></span><span>$120.00</span><span class="pill">Paid</span></div>`),
-    detail: el('div', 'view', `<div class="detail"><h5>Order #1042</h5><div class="field">Date<b>Nov 24</b></div><div class="field">Total<b>$120.00</b></div><div class="field">Products<b>3</b></div><div class="field">Status<b>Paid</b></div><span class="btn">Cancel order</span></div>`),
-    summary: el('div', 'view', `<div class="summary"><div>Order #1042</div><div class="total">$120.00</div><span class="pill">Paid</span></div>`),
+    row: el('div', 'view', `<div class="row">${thumb}<b>Trail Runner</b><span class="sp"></span><span>$89.00</span><span class="pill">In stock</span></div>`),
+    detail: el('div', 'view', `<div class="detail"><h5>Trail Runner</h5><div class="field">Price<b>$89.00</b></div><div class="field">Stock<b>24</b></div><div class="field">Provider<b>North Supply</b></div><div class="field">Last updated<b>Nov 24</b></div><span class="btn">Add to cart</span></div>`),
+    summary: el('div', 'view', `<div class="shop-card"><div class="picture"></div><div class="name">Trail Runner</div><div class="price">$89.00</div><span class="btn">Add to cart</span></div>`),
   }
   for (const [k, v] of Object.entries(views)) {
     const p = VIEWS[k].s6, l = labels[k]
@@ -267,24 +269,22 @@ function build(world, uid = '') {
     world.append(l, v)
   }
 
-  // Screens
+  // Screens: a catalog (list + detail) and the shop
   const screens = {
-    orders: el('div', 'screen', `<div class="screen-bar"><i></i><i></i><i></i><span>Orders</span></div><div class="chips"><em>All</em><em>Paid</em><em>Pending</em></div>`),
-    checkout: el('div', 'screen', `<div class="screen-bar"><i></i><i></i><i></i><span>Checkout</span></div>`),
+    catalog: el('div', 'screen', `<div class="screen-bar"><i></i><i></i><i></i><span>Catalog</span></div><div class="chips"><em>All</em><em>Shoes</em><em>Clothing</em></div>`),
+    shop: el('div', 'screen', `<div class="screen-bar"><i></i><i></i><i></i><span>Shop</span></div>`),
   }
-  Object.assign(screens.orders.style, { left: '70px', top: '560px', width: '580px', height: '330px' })
-  Object.assign(screens.checkout.style, { left: '700px', top: '560px', width: '420px', height: '330px' })
+  Object.assign(screens.catalog.style, { left: '70px', top: '560px', width: '580px', height: '330px' })
+  Object.assign(screens.shop.style, { left: '700px', top: '560px', width: '420px', height: '330px' })
   const extras = []
-  const rowHtml = (n, name, total, st) => `<div class="view" style="position:absolute;left:26px;width:300px;height:44px;top:${n}px"><div class="row"><b>${name.split(' ')[0]}</b><span>${name.split(' ').slice(1).join(' ')}</span><span class="sp"></span><span>${total}</span><span class="pill" ${st !== 'Paid' ? 'style="background:#fff4db;color:#8a5a00"' : ''}>${st}</span></div></div>`
-  const more = el('div', 'extra', rowHtml(132, '#1041 Luis Paz', '$48.00', 'Paid') + rowHtml(184, '#1040 Mara Gil', '$96.50', 'Pending') + rowHtml(236, '#1039 Joe Kim', '$210.00', 'Paid'))
+  const rowHtml = (top, name, price, st) => `<div class="view" style="position:absolute;left:26px;width:300px;height:44px;top:${top}px"><div class="row">${thumb}<b>${name}</b><span class="sp"></span><span>${price}</span><span class="pill" ${st !== 'In stock' ? 'style="background:#fff4db;color:#8a5a00"' : ''}>${st}</span></div></div>`
+  const more = el('div', 'extra', rowHtml(138, 'City Sneaker', '$72.00', 'In stock') + rowHtml(190, 'Rain Jacket', '$120.00', 'Low stock') + rowHtml(242, 'Wool Socks', '$14.00', 'In stock'))
   more.style.left = '0'; more.style.top = '0'
-  screens.orders.append(more); extras.push(more)
-  const pay = el('div', 'extra', `<div class="pay">Pay with card<b>•••• 4242</b></div>`)
-  Object.assign(pay.style, { left: '22px', top: '204px', width: '376px' })
-  const place = el('div', 'extra', `<div class="place">Place order</div>`)
-  Object.assign(place.style, { left: '22px', top: '260px', width: '376px' })
-  screens.checkout.append(pay, place); extras.push(pay, place)
-  world.prepend(screens.orders, screens.checkout)
+  screens.catalog.append(more); extras.push(more)
+  const other = el('div', 'extra', `<div class="view" style="position:relative;width:180px;height:236px"><div class="shop-card"><div class="picture alt"></div><div class="name">City Sneaker</div><div class="price">$72.00</div><span class="btn">Add to cart</span></div></div>`)
+  Object.assign(other.style, { left: '216px', top: '46px' })
+  screens.shop.append(other); extras.push(other)
+  world.prepend(screens.catalog, screens.shop)
 
   const stickies = STICKIES.map((n) => {
     const st = el('div', `sticky sticky-${n.color}`, `<span>${n.who}</span><p>${n.text}</p>`)
@@ -483,7 +483,7 @@ function render(step, parts, world, stage, chromeCrumb, roles) {
   })
   world.classList.toggle('mode-actions', step === 5)
   world.classList.toggle('mode-dim', step >= 6)
-  for (const [id, c] of Object.entries(cols)) c.classList.toggle('is-source', id === 'order')
+  for (const [id, c] of Object.entries(cols)) c.classList.toggle('is-source', id === 'product')
   for (const [id, c] of Object.entries(cols)) if (step >= 7) c.classList.add('is-off')
 
   roles.classList.toggle('is-on', step === 5)
