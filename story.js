@@ -247,7 +247,7 @@ function init() {
   const crumb = story.querySelector('.stage-chrome .crumb'), roles = story.querySelector('.roles')
   const steps = [...story.querySelectorAll('.story-step')]
   // Review switch: ?motion=1 shows the animation even when the system asks for reduced motion
-  if (new URLSearchParams(location.search).has('motion')) story.classList.add('force-motion')
+  if (new URLSearchParams(location.search).has('motion') || location.hash === '#motion') story.classList.add('force-motion')
   const parts = build(world)
   parts.step = 0
 
