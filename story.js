@@ -141,7 +141,7 @@ const CAMERA = [
   { x: orderCol.x - 50, y: BOARD_Y - 30, w: productCol.x + COL_W - orderCol.x + 100, h: 400 },
   { x: 0, y: 80, w: 1200, h: 540 },
   { x: 0, y: 70, w: 1200, h: 450 },
-  { x: 40, y: 400, w: 1100, h: 450 },
+  { x: 40, y: 90, w: 1100, h: 800 },
   { x: 60, y: 540, w: 1070, h: 370 },
 ]
 // On a phone the stage is narrow: frame fewer columns so cards stay readable.
@@ -149,17 +149,33 @@ const CAMERA_MOBILE = {
   0: { x: 40, y: 175, w: 900, h: 250 },
   4: { x: 10, y: 100, w: 720, h: 530 },
   5: { x: 10, y: 90, w: 720, h: 420 },
-  6: { x: 50, y: 575, w: 1010, h: 285 },
+  6: { x: 240, y: 575, w: 880, h: 330 },
   7: { x: 60, y: 540, w: 600, h: 370 },
 }
 const CRUMB = ['Commerce', 'Commerce · Objects', 'Commerce · Objects', 'Commerce · Objects', 'Commerce · Objects',
   'Commerce · Access', 'Commerce · Views', 'Commerce · Screens']
 
-// Views of a Product (step 6) and where they land in the two screens (step 7).
+// Three Views of the Product object (step 6). Each one grows out of a manifestation on the board:
+// the Card from the Product card nested in Order, the Detail from the whole Product object, the List item
+// from the Product card nested in Provider. In step 7 they are placed on two screens.
+const cardRect = (objectId, nestedId) => {
+  const o = byId[objectId], k = o.cards.findIndex((c) => c[0] === 'nested' && c[3] === nestedId)
+  return { x: colX(o.index) + 10, y: cardTop(o, k), w: COL_W - 20, h: CARD_H }
+}
 const VIEWS = {
-  row: { s6: { x: 70, y: 650, w: 330, h: 44 }, s7: { x: 96, y: 646, w: 300, h: 44 } },
-  detail: { s6: { x: 450, y: 610, w: 290, h: 230 }, s7: { x: 414, y: 606, w: 220, h: 236 } },
-  summary: { s6: { x: 830, y: 610, w: 210, h: 230 }, s7: { x: 724, y: 606, w: 180, h: 236 } },
+  card: { from: () => cardRect('order', 'product'), nested: true,
+    s6: { x: 255, y: 610, w: 200, h: 226 }, s7: { x: 724, y: 606, w: 180, h: 226 } },
+  detail: { from: () => ({ x: colX(2), y: BOARD_Y, w: COL_W, h: colHeight(byId.product) + 2 }), nested: false,
+    s6: { x: 500, y: 600, w: 230, h: 286 }, s7: { x: 412, y: 600, w: 220, h: 286 } },
+  list: { from: () => cardRect('provider', 'product'), nested: true,
+    s6: { x: 770, y: 650, w: 340, h: 48 }, s7: { x: 96, y: 646, w: 300, h: 48 } },
+}
+// A View is made of blocks that stand for the object's cards, like the Views in the app
+const block = (type, label, extra = '') => `<div class="vb vb-${type}${extra}"><span>${label}</span></div>`
+const VIEW_HTML = {
+  card: `<div class="vframe">${block('attribute', 'Image', ' tall')}${block('attribute', 'Name')}${block('attribute', 'Price')}${block('cta', 'Add to cart')}</div>`,
+  detail: `<div class="vframe">${block('attribute', 'Image', ' tall')}${block('attribute', 'Name')}${block('attribute', 'Description')}<div class="vrow">${block('attribute', 'Price')}${block('metadata', 'Stock')}</div>${block('metadata', 'Last updated')}${block('cta', 'Add to cart')}${block('nested', 'Provider')}</div>`,
+  list: `<div class="vframe vrow">${block('attribute', 'Image', ' square')}${block('attribute', 'Name', ' grow')}${block('attribute', 'Price')}${block('metadata', 'Stock')}</div>`,
 }
 
 const el = (tag, cls, html) => { const n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n }
@@ -245,43 +261,30 @@ function build(world, uid = '') {
   for (const n of cols.product.querySelectorAll('.card:not(.ghost-card):not(.nested)')) flyer.querySelector('.col-cards').append(n.cloneNode(true))
   world.append(flyer)
 
-  // Views: right-angled dashed links from the Product object to each of its views
+  // Views (no connecting lines: each view visibly grows out of its source)
   const viewLinks = svg('view-links')
-  const source = byId.product, ox = colX(source.index) + COL_W / 2, oy = BOARD_Y + colHeight(source)
-  for (const v of Object.values(VIEWS)) {
-    const p = document.createElementNS(svgNS, 'path'), tx = v.s6.x + v.s6.w / 2, ty = v.s6.y - 28, my = oy + 40
-    p.setAttribute('d', roundedPath([{ x: ox, y: oy }, { x: ox, y: my }, { x: tx, y: my }, { x: tx, y: ty }], 12))
-    viewLinks.append(p)
-  }
   world.append(viewLinks)
-  const labels = {
-    row: el('div', 'view-label', 'In a list'), detail: el('div', 'view-label', 'As a detail'), summary: el('div', 'view-label', 'In the shop'),
-  }
-  const thumb = '<i class="thumb"></i>'
-  const views = {
-    row: el('div', 'view', `<div class="row">${thumb}<b>Trail Runner</b><span class="sp"></span><span>$89.00</span><span class="pill">In stock</span></div>`),
-    detail: el('div', 'view', `<div class="detail"><h5>Trail Runner</h5><div class="field">Price<b>$89.00</b></div><div class="field">Stock<b>24</b></div><div class="field">Provider<b>North Supply</b></div><div class="field">Last updated<b>Nov 24</b></div><span class="btn">Add to cart</span></div>`),
-    summary: el('div', 'view', `<div class="shop-card"><div class="picture"></div><div class="name">Trail Runner</div><div class="price">$89.00</div><span class="btn">Add to cart</span></div>`),
-  }
-  for (const [k, v] of Object.entries(views)) {
-    const p = VIEWS[k].s6, l = labels[k]
-    l.style.left = p.x + 'px'; l.style.top = (p.y - 22) + 'px'
-    world.append(l, v)
+  const labels = { card: el('div', 'view-label', 'Card'), detail: el('div', 'view-label', 'Detail'), list: el('div', 'view-label', 'List item') }
+  const views = {}
+  for (const [k, v] of Object.entries(VIEWS)) {
+    views[k] = el('div', `view view-${k}`, VIEW_HTML[k])
+    labels[k].style.left = v.s6.x + 'px'; labels[k].style.top = (v.s6.y - 22) + 'px'
+    world.append(labels[k], views[k])
   }
 
-  // Screens: a catalog (list + detail) and the shop
+  // Screens place those views: the Catalog shows the list (repeated) and the detail; the Shop shows cards
   const screens = {
-    catalog: el('div', 'screen', `<div class="screen-bar"><i></i><i></i><i></i><span>Catalog</span></div><div class="chips"><em>All</em><em>Shoes</em><em>Clothing</em></div>`),
+    catalog: el('div', 'screen', `<div class="screen-bar"><i></i><i></i><i></i><span>Catalog</span></div>`),
     shop: el('div', 'screen', `<div class="screen-bar"><i></i><i></i><i></i><span>Shop</span></div>`),
   }
-  Object.assign(screens.catalog.style, { left: '70px', top: '560px', width: '580px', height: '330px' })
-  Object.assign(screens.shop.style, { left: '700px', top: '560px', width: '420px', height: '330px' })
+  Object.assign(screens.catalog.style, { left: '70px', top: '560px', width: '580px', height: '340px' })
+  Object.assign(screens.shop.style, { left: '700px', top: '560px', width: '420px', height: '340px' })
   const extras = []
-  const rowHtml = (top, name, price, st) => `<div class="view" style="position:absolute;left:26px;width:300px;height:44px;top:${top}px"><div class="row">${thumb}<b>${name}</b><span class="sp"></span><span>${price}</span><span class="pill" ${st !== 'In stock' ? 'style="background:#fff4db;color:#8a5a00"' : ''}>${st}</span></div></div>`
-  const more = el('div', 'extra', rowHtml(138, 'City Sneaker', '$72.00', 'In stock') + rowHtml(190, 'Rain Jacket', '$120.00', 'Low stock') + rowHtml(242, 'Wool Socks', '$14.00', 'In stock'))
+  const repeat = (top) => `<div class="view view-list repeat" style="position:absolute;left:26px;width:300px;height:48px;top:${top}px">${VIEW_HTML.list}</div>`
+  const more = el('div', 'extra', repeat(140) + repeat(194) + repeat(248))
   more.style.left = '0'; more.style.top = '0'
   screens.catalog.append(more); extras.push(more)
-  const other = el('div', 'extra', `<div class="view" style="position:relative;width:180px;height:236px"><div class="shop-card"><div class="picture alt"></div><div class="name">City Sneaker</div><div class="price">$72.00</div><span class="btn">Add to cart</span></div></div>`)
+  const other = el('div', 'extra', `<div class="view view-card repeat" style="position:relative;width:180px;height:226px">${VIEW_HTML.card}</div>`)
   Object.assign(other.style, { left: '216px', top: '46px' })
   screens.shop.append(other); extras.push(other)
   world.prepend(screens.catalog, screens.shop)
@@ -488,11 +491,13 @@ function render(step, parts, world, stage, chromeCrumb, roles) {
 
   roles.classList.toggle('is-on', step === 5)
 
-  viewLinks.classList.toggle('is-off', step !== 6)
+  viewLinks.classList.add('is-off')
   for (const [k, v] of Object.entries(views)) {
-    const p = step >= 7 ? VIEWS[k].s7 : VIEWS[k].s6
+    const spec = VIEWS[k], p = step >= 7 ? spec.s7 : step === 6 ? spec.s6 : spec.from()
     Object.assign(v.style, { left: p.x + 'px', top: p.y + 'px', width: p.w + 'px', height: p.h + 'px' })
     v.classList.toggle('is-off', step < 6)
+    v.classList.toggle('at-source', step < 6)
+    v.classList.toggle('from-nested', spec.nested)
     labels[k].classList.toggle('is-off', step !== 6)
   }
   for (const s of Object.values(screens)) s.classList.toggle('is-off', step < 7)

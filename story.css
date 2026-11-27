@@ -254,3 +254,22 @@ main:has(.story){overflow:clip}
 .view .shop-card .name{font-size:13px;font-weight:600}
 .view .shop-card .price{font-size:13px;color:#475569}
 .view .shop-card .btn{margin-top:4px;text-align:center}
+
+/* Views made of card blocks (like the Views in the app). While waiting on its source a view looks like that
+   source (a nested card or the whole object); in step 6 it grows into its own shape. */
+.view{transition:left var(--t) var(--ease),top var(--t) var(--ease),width var(--t) var(--ease),height var(--t) var(--ease),
+  opacity .2s ease,background .5s var(--ease),border-color .5s var(--ease)}
+.view.at-source.from-nested{background:var(--blue-bg);border-color:var(--blue-bd)}
+.view .vframe{display:flex;flex-direction:column;gap:6px;padding:8px;height:100%;transition:opacity .5s var(--ease) .25s}
+.view.at-source .vframe{opacity:0;transition-delay:0s}
+.view .vframe.vrow,.view .vrow{flex-direction:row;align-items:stretch}
+.view .vrow{display:flex;gap:6px}.view .vrow > .vb{flex:1}
+.vb{border:1px solid;border-radius:5px;min-height:24px;padding:0 8px;display:flex;align-items:center;font-size:11.5px;font-weight:500;white-space:nowrap;overflow:hidden}
+.vb.tall{flex:1;min-height:60px;align-items:flex-start;padding-top:6px}
+.vb.square{width:30px;padding:0;justify-content:center}.vb.square span{display:none}
+.vb.grow{flex:1}
+.vb-attribute{background:var(--amber-bg);border-color:var(--amber-bd);color:var(--amber-ink)}
+.vb-metadata{background:var(--rose-bg);border-color:var(--rose-bd);color:var(--rose-ink)}
+.vb-cta{background:var(--emerald-bg);border-color:var(--emerald-bd);color:var(--emerald-ink)}
+.vb-nested{background:var(--blue-bg);border-color:var(--blue-bd);color:var(--blue-ink)}
+.view.repeat{opacity:.55}
