@@ -267,6 +267,33 @@ function build(world, uid = '') {
   return { lines, nodes, nestLinks, cols, cards, ghost, flyer, viewLinks, labels, views, screens, extras, mapLinks, addLink }
 }
 
+// While Product is being filled in, its cards can be put in a different order by dragging them up or down.
+// Only the stage's own copy changes; nothing is saved.
+function makeCardsSortable(parts, world) {
+  let drag = null
+  const movable = (card) => card && card.closest('.col') === parts.cols.product && !card.classList.contains('nested') &&
+    !card.classList.contains('ghost-card') && !card.classList.contains('is-hidden')
+  world.addEventListener('pointerdown', (e) => {
+    if (!(parts.step === 2 || parts.step === 3) || e.button > 0) return
+    const card = e.target.closest('.card')
+    if (!movable(card)) return
+    e.preventDefault()
+    drag = { card, list: card.parentElement }
+    card.classList.add('is-sorting')
+    try { card.setPointerCapture(e.pointerId) } catch {}
+  })
+  world.addEventListener('pointermove', (e) => {
+    if (!drag) return
+    const others = [...drag.list.children].filter((c) => c !== drag.card && movable(c))
+    const before = others.find((c) => { const r = c.getBoundingClientRect(); return e.clientY < r.top + r.height / 2 })
+    const anchorCard = before ?? [...drag.list.children].find((c) => c.classList.contains('nested')) ?? null
+    if (drag.card.nextElementSibling !== anchorCard) drag.list.insertBefore(drag.card, anchorCard)
+  })
+  const end = () => { if (drag) { drag.card.classList.remove('is-sorting'); drag = null } }
+  world.addEventListener('pointerup', end)
+  world.addEventListener('pointercancel', end)
+}
+
 // The hero map can be touched: hover a box to see its connectors, drag it around, or pull a new connector
 // from its handle to another box. Only on the live stage, only while the hero is on screen. Nothing is saved.
 function makeMapInteractive(parts, world, stage) {
@@ -396,17 +423,24 @@ function render(step, parts, world, stage, chromeCrumb, roles) {
     flyer.classList.remove('is-off')
     flyer.classList.add('as-nested')
     Object.assign(flyer.style, { left: colX(order.index) + 10 + 'px', top: cardTop(order, slot) + 'px', width: COL_W - 20 + 'px', height: CARD_H + 'px' })
-    setTimeout(() => { if (parts.step === 3) flyer.classList.add('is-off') }, 950)
+    setTimeout(() => {
+      if (parts.step !== 3) return
+      flyer.style.transition = 'none'
+      flyer.classList.add('is-off')
+      cols.order.querySelectorAll('.card')[slot].classList.remove('is-waiting')
+      requestAnimationFrame(() => { flyer.style.transition = '' })
+    }, 900)
   } else {
     flyer.classList.add('is-off')
     flyer.classList.remove('as-nested')
     Object.assign(flyer.style, { left: colX(2) + 'px', top: BOARD_Y + 'px', width: COL_W + 'px', height: colHeight(byId.product) + 'px' })
   }
-  // While the copy travels, the real nested card in Order waits
+  // While the copy travels, the real nested card in Order keeps its place but stays invisible
   const realSlot = cols.order.querySelectorAll('.card')[slot]
   realSlot.classList.toggle('is-hidden', step < 3)
-  if (step === 3) { realSlot.style.transitionDelay = '0.85s' } else { realSlot.style.transitionDelay = '' }
+  realSlot.classList.toggle('is-waiting', step === 3 && !flyer.classList.contains('is-off'))
 
+  world.classList.toggle('can-sort', step === 2 || step === 3)
   world.classList.toggle('mode-actions', step === 5)
   world.classList.toggle('mode-dim', step >= 6)
   for (const [id, c] of Object.entries(cols)) c.classList.toggle('is-source', id === 'order')
@@ -448,6 +482,12 @@ function init() {
   const parts = build(world)
   parts.step = 0
   makeMapInteractive(parts, world, stage)
+  // "Add attribute" is a real button: it moves the story on to the step where Product gets its cards
+  parts.ghost.setAttribute('role', 'button')
+  parts.ghost.addEventListener('click', () => {
+    if (parts.step === 1) steps[2].scrollIntoView({ behavior: 'smooth', block: 'center' })
+  })
+  makeCardsSortable(parts, world)
 
   // Reduced motion (without the review switch): fade the stage out, change the frame, fade it back in
   const gentle = () => matchMedia('(prefers-reduced-motion: reduce)').matches && !story.classList.contains('force-motion')

@@ -213,3 +213,14 @@ main:has(.story){overflow:clip}
 .map-handle.is-on{opacity:1;pointer-events:auto}
 .map-handle::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--action)}
 .story-stage.is-connecting,.story-stage.is-connecting *{cursor:crosshair !important}
+
+/* Add attribute is a button on the live stage */
+.story-stage .ghost-card{cursor:pointer}
+.story-stage .ghost-card:hover{border-color:var(--action);color:var(--action);background:rgba(41,76,219,.04)}
+/* Product's cards can be reordered while it is being filled in */
+.world.can-sort .col[data-map-id="product"] .card:not(.nested):not(.ghost-card){cursor:grab;touch-action:none}
+.card.is-sorting{cursor:grabbing !important;box-shadow:0 6px 16px rgba(11,13,18,.14);position:relative;z-index:2}
+/* The real nested card waits, invisible but in place, while its copy travels in */
+.card.is-waiting{opacity:0 !important;transition:none !important}
+/* Phone pictures are pictures */
+.step-still{pointer-events:none}
