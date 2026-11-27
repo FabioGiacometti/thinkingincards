@@ -132,6 +132,15 @@ const STICKIES = [
   { who: 'Finance', text: 'Can we refund part of a Payment, or only all of it?', color: 'purple', x: 990, y: 384, tilt: -1.8 },
 ]
 
+// Step 05: the CTA Matrix. Objects stay as columns, each role is a row, and every action appears in the
+// cell of each role that can take it.
+const ROLES = ['Customer', 'Staff', 'Admin']
+const PERMISSIONS = {
+  'Create order': ['Customer', 'Staff'], 'Contact client': ['Staff', 'Admin'], 'Cancel order': ['Customer', 'Staff', 'Admin'],
+  'Add to cart': ['Customer'], 'Contact provider': ['Staff', 'Admin'], 'Refund': ['Admin'],
+}
+const ROW_H = 82, MATRIX_TOP = BOARD_Y + HEAD + 6
+
 // Camera: the world rectangle each step frames.
 const productCol = { x: colX(2), w: COL_W }, orderCol = { x: colX(1) }
 const CAMERA = [
@@ -140,7 +149,7 @@ const CAMERA = [
   { x: productCol.x - 80, y: BOARD_Y - 30, w: COL_W + 160, h: 380 },
   { x: orderCol.x - 50, y: BOARD_Y - 30, w: productCol.x + COL_W - orderCol.x + 100, h: 400 },
   { x: 0, y: 80, w: 1200, h: 540 },
-  { x: 0, y: 70, w: 1200, h: 450 },
+  { x: -215, y: 90, w: 1405, h: 370 },
   { x: 40, y: 90, w: 1100, h: 800 },
   { x: 60, y: 540, w: 1070, h: 370 },
 ]
@@ -148,7 +157,7 @@ const CAMERA = [
 const CAMERA_MOBILE = {
   0: { x: 40, y: 175, w: 900, h: 250 },
   4: { x: 10, y: 100, w: 720, h: 530 },
-  5: { x: 10, y: 90, w: 720, h: 420 },
+  5: { x: -200, y: 100, w: 950, h: 370 },
   6: { x: 240, y: 575, w: 880, h: 330 },
   7: { x: 60, y: 540, w: 600, h: 370 },
 }
@@ -295,8 +304,23 @@ function build(world, uid = '') {
     world.append(st)
     return st
   })
+  const matrix = el('div', 'matrix')
+  ROLES.forEach((role, r) => {
+    const top = MATRIX_TOP + r * ROW_H
+    const line = el('div', 'matrix-line'); Object.assign(line.style, { top: top + 'px' })
+    const label = el('div', 'matrix-role', role); Object.assign(label.style, { top: top + ROW_H / 2 + 'px' })
+    matrix.append(line, label)
+    for (const o of OBJECTS) {
+      const ctas = o.cards.filter((c) => c[0] === 'cta' && (PERMISSIONS[c[1]] || []).includes(role))
+      if (!ctas.length) continue
+      const cell = el('div', 'matrix-cell', ctas.map((c) => `<div class="card cta">${c[1]}</div>`).join(''))
+      Object.assign(cell.style, { left: colX(byId[o.id].index) + 10 + 'px', top: top + 8 + 'px', width: COL_W - 20 + 'px' })
+      matrix.append(cell)
+    }
+  })
+  world.append(matrix)
   cols.product.dataset.mapId = 'product' // in the hero the Product column is the Product box of the map
-  return { lines, nodes, nestLinks, cols, cards, ghost, flyer, viewLinks, labels, views, screens, extras, mapLinks, addLink, stickies }
+  return { lines, nodes, nestLinks, cols, cards, ghost, flyer, viewLinks, labels, views, screens, extras, mapLinks, addLink, stickies, matrix }
 }
 
 // While Product is being filled in, its cards can be put in a different order by dragging them up or down.
@@ -444,7 +468,8 @@ function render(step, parts, world, stage, chromeCrumb, roles) {
     } else {
       const rows = n + (id === 'product' && step === 1 ? 1 : 0) // the ghost "Add attribute" card
       const list = rows ? rows * CARD_H + (rows - 1) * CARD_GAP : 0
-      Object.assign(c.style, { left: colX(byId[id].index) + 'px', top: BOARD_Y + 'px', width: COL_W + 'px', height: HEAD + list + PAD + 2 + 'px' })
+      const height = step === 5 ? HEAD + ROLES.length * ROW_H + 8 : HEAD + list + PAD + 2 // step 05: a matrix column
+      Object.assign(c.style, { left: colX(byId[id].index) + 'px', top: BOARD_Y + 'px', width: COL_W + 'px', height: height + 'px' })
     }
   }
   nestLinks.classList.add('is-off') // the board reads without them
@@ -484,12 +509,13 @@ function render(step, parts, world, stage, chromeCrumb, roles) {
     }
     if (!on) st.classList.remove('is-in')
   })
-  world.classList.toggle('mode-actions', step === 5)
+  world.classList.toggle('mode-matrix', step === 5)
+  parts.matrix.classList.toggle('is-off', step !== 5)
   world.classList.toggle('mode-dim', step >= 6)
   for (const [id, c] of Object.entries(cols)) c.classList.toggle('is-source', id === 'product')
   for (const [id, c] of Object.entries(cols)) if (step >= 7) c.classList.add('is-off')
 
-  roles.classList.toggle('is-on', step === 5)
+  roles.classList.remove('is-on') // the matrix itself says who can do what
 
   viewLinks.classList.add('is-off')
   for (const [k, v] of Object.entries(views)) {
@@ -586,7 +612,6 @@ function init() {
         const after = step.querySelector('h1, h2')
         if (i === 0) step.querySelector('.more')?.after(fig)
         else after.after(fig)
-        if (i === 5) fig.after(stepRoles)
         return { fig, w, p, stepRoles }
       })
     }

@@ -273,3 +273,12 @@ main:has(.story){overflow:clip}
 .vb-cta{background:var(--emerald-bg);border-color:var(--emerald-bd);color:var(--emerald-ink)}
 .vb-nested{background:var(--blue-bg);border-color:var(--blue-bd);color:var(--blue-ink)}
 .view.repeat{opacity:.55}
+
+/* Step 05: the CTA Matrix */
+.world.mode-matrix .col .col-cards,.world.mode-matrix .col .col-head span{opacity:0}
+.matrix{position:absolute;left:0;top:0;transition:opacity .5s var(--ease) .35s;z-index:2}
+.matrix.is-off{transition-delay:0s}
+.matrix-line{position:absolute;left:-170px;width:1343px;height:1px;background:#e2e6ee}
+.matrix-role{position:absolute;left:-160px;transform:translateY(-50%);font:600 14px/1 "Helvetica Neue",Helvetica,Arial,sans-serif;color:#111827}
+.matrix-cell{position:absolute;display:flex;flex-direction:column;gap:6px}
+.matrix-cell .card{opacity:1;height:30px}
