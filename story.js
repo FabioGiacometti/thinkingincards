@@ -40,9 +40,11 @@ const cardTop = (o, k) => BOARD_Y + HEAD + k * (CARD_H + CARD_GAP)
 const NODE_W = 172, NODE_H = 52, DIAMOND = 108 // diamond = its full width and height
 const NODE_POS = {
   client: { x: 132, y: 220 }, order: { x: 390, y: 220 }, product: { x: 648, y: 220 }, stock: { x: 880, y: 220 },
-  provider: { x: 1110, y: 220 }, payment: { x: 390, y: 400 },
+  shipment: { x: 1110, y: 220 }, payment: { x: 390, y: 400 }, provider: { x: 880, y: 400 },
 }
 const DECISIONS = [{ id: 'stock', label: 'In stock?' }]
+// Nodes that exist only in the hero map (they are not objects of the sample model below)
+const MAP_ONLY = [{ id: 'shipment', label: 'Shipment' }]
 const nodePos = (id) => NODE_POS[id]
 const isDecision = (id) => DECISIONS.some((d) => d.id === id)
 // [from, fromSide, to, toSide, label]
@@ -50,7 +52,8 @@ const MAP_LINKS = [
   ['client', 'right', 'order', 'left', 'places'],
   ['order', 'right', 'product', 'left', 'includes'],
   ['product', 'right', 'stock', 'left', ''],
-  ['stock', 'right', 'provider', 'left', 'No: reorder from'],
+  ['stock', 'right', 'shipment', 'left', 'Yes'],
+  ['stock', 'bottom', 'provider', 'top', 'No: reorder from'],
   ['order', 'bottom', 'payment', 'top', 'paid with'],
   ['client', 'bottom', 'payment', 'left', 'makes'],
 ]
@@ -133,6 +136,11 @@ function build(world) {
     const n = el('div', 'map-node', `<b>${o.name}</b>`), p = nodePos(o.id)
     n.style.left = p.x + 'px'; n.style.top = p.y + 'px'
     world.append(n); nodes[o.id] = n
+  }
+  for (const m of MAP_ONLY) {
+    const n = el('div', 'map-node', `<b>${m.label}</b>`), p = nodePos(m.id)
+    n.style.left = p.x + 'px'; n.style.top = p.y + 'px'
+    world.append(n); nodes[m.id] = n
   }
   for (const d of DECISIONS) {
     const n = el('div', 'map-decision', `<span>${d.label}</span>`), p = nodePos(d.id)
