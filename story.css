@@ -148,3 +148,19 @@ main:has(.story){overflow:clip}
   .story.force-motion .col-head,.story.force-motion .col-cards{transition:opacity .6s var(--ease),transform .6s var(--ease)!important}
   .story.force-motion .screen .extra{transition:opacity .6s var(--ease) .35s!important}
 }
+
+/* No window: the model lies directly on the page canvas, large, bleeding to the right edge. */
+.story{grid-template-columns:minmax(320px,.5fr) minmax(0,1.5fr);gap:24px;max-width:none;
+  padding-left:max(32px,calc((100vw - 1320px)/2));padding-right:0}
+.story-stage-wrap{top:72px;height:calc(100vh - 80px);min-height:480px;margin-top:0}
+.story-stage{border:0;border-radius:0;background:transparent;box-shadow:none;
+  -webkit-mask-image:linear-gradient(to right,transparent 0,#000 56px);mask-image:linear-gradient(to right,transparent 0,#000 56px)}
+.stage-chrome{display:none}
+.stage-viewport{inset:0}
+.roles{right:max(24px,calc((100vw - 1320px)/2));bottom:28px}
+@media (max-width:900px){
+  .story{grid-template-columns:1fr;gap:0;padding:0 18px}
+  .story-stage-wrap{top:0;height:calc(48vh + 10px);margin:0 -18px;padding:6px 0}
+  .story-stage{-webkit-mask-image:none;mask-image:none}
+  .roles{right:12px;bottom:10px}
+}

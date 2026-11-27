@@ -51,8 +51,8 @@ function cardFrom(objectId, card) {
 // Camera: the world rectangle each step frames.
 const productCol = { x: colX(2), w: COL_W }, orderCol = { x: colX(1) }
 const CAMERA = [
-  { x: 90, y: 160, w: 1020, h: 400 },
-  { x: productCol.x - 70, y: BOARD_Y - 30, w: COL_W + 140, h: 300 },
+  { x: 20, y: 150, w: 1160, h: 420 },
+  { x: productCol.x - 70, y: BOARD_Y - 50, w: COL_W + 140, h: 200 },
   { x: productCol.x - 80, y: BOARD_Y - 30, w: COL_W + 160, h: 380 },
   { x: orderCol.x - 50, y: BOARD_Y - 30, w: productCol.x + COL_W - orderCol.x + 100, h: 400 },
   { x: 0, y: 70, w: 1200, h: 450 },

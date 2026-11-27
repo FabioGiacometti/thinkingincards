@@ -2,7 +2,9 @@
 
 The homepage tells one story with one sample project (commerce: Client, Order, Product, Provider, Payment).
 Layout: a **sticky stage** on one side that changes as **text steps** scroll beside it (stacked on mobile). The stage
-looks like the **real app**: same cards, colors and columns, so the story is also proof of the product.
+has **no window around it**: the model lies directly on the page canvas, large, bleeding to the right edge. It looks like
+the **real app**: same cards, colors and columns, so the story is also proof of the product. It is live HTML, never a
+video. Prototype: `story.html` (`?motion=1` forces the animation when the system asks for reduced motion).
 
 Headline idea it embodies: **Product structure first.** Screens come at the end.
 
