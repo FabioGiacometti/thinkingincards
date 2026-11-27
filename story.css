@@ -48,7 +48,7 @@ main:has(.story){overflow:clip}
 .map-node b{font-size:15px;font-weight:600;letter-spacing:-.2px}
 /* A decision: a diamond whose label stays level */
 .map-decision{position:absolute;width:76px;height:76px;margin:-38px 0 0 -38px;transform:rotate(45deg);border-radius:8px;background:#fff;
-  border:1px solid #e2e6ee;box-shadow:0 1px 2px rgba(11,13,18,.05),0 6px 16px rgba(11,13,18,.04);display:flex;align-items:center;justify-content:center;
+  border:1.5px solid #f43f5e;box-shadow:0 1px 2px rgba(11,13,18,.05),0 6px 16px rgba(11,13,18,.04);display:flex;align-items:center;justify-content:center;
   transition:opacity .6s var(--ease)}
 .map-decision span{transform:rotate(-45deg);font-size:12.5px;font-weight:600;color:#111827;white-space:nowrap}
 /* Connector labels sit on the line, on the page colour so the line breaks around them */
