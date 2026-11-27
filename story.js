@@ -93,6 +93,7 @@ const CAMERA = [
 ]
 // On a phone the stage is narrow: frame fewer columns so cards stay readable.
 const CAMERA_MOBILE = {
+  0: { x: 40, y: 175, w: 900, h: 250 },
   4: { x: 10, y: 90, w: 720, h: 420 },
   5: { x: 10, y: 90, w: 720, h: 420 },
   6: { x: 40, y: 560, w: 760, h: 320 },
@@ -110,18 +111,18 @@ const VIEWS = {
 
 const el = (tag, cls, html) => { const n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n }
 
-function build(world) {
+function build(world, uid = '') {
   const svgNS = 'http://www.w3.org/2000/svg'
   const svg = (cls) => { const s = document.createElementNS(svgNS, 'svg'); s.setAttribute('class', cls); s.setAttribute('viewBox', '0 0 1200 1000'); return s }
 
   // Map lines + nodes
   const lines = svg('map-lines')
-  lines.innerHTML = '<defs><marker id="map-arrow" viewBox="0 0 10 10" refX="9.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0.8 L10 5 L0 9.2 L2.2 5 z"/></marker></defs>'
+  lines.innerHTML = `<defs><marker id="map-arrow${uid}" viewBox="0 0 10 10" refX="9.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0.8 L10 5 L0 9.2 L2.2 5 z"/></marker></defs>`
   const nodes = {}
   MAP_LINKS.forEach(([a, as, b, bs, text], i) => {
     const path = document.createElementNS(svgNS, 'path'), step = smoothStep(anchor(a, as), anchor(b, bs))
     path.setAttribute('d', step.d)
-    path.setAttribute('marker-end', 'url(#map-arrow)')
+    path.setAttribute('marker-end', `url(#map-arrow${uid})`)
     lines.append(path)
     if (text) {
       const label = el('div', 'map-label', text)
@@ -327,6 +328,33 @@ function init() {
   mobile.addEventListener('change', observe)
   window.addEventListener('resize', () => render(parts.step, parts, world, stage, crumb, roles))
   go(0)
+
+  // On a phone the fixed stage would hold the lower half of the screen while the text scrolls under it.
+  // Instead, each step carries its own still picture of its final frame, and the page scrolls normally.
+  let stills = null
+  const renderStills = () => {
+    if (!mobile.matches) return
+    if (!stills) {
+      stills = steps.map((step, i) => {
+        const fig = el('figure', 'step-still')
+        fig.setAttribute('aria-hidden', 'true')
+        fig.innerHTML = '<div class="stage-viewport"><div class="world"></div></div>'
+        const w = fig.querySelector('.world'), p = build(w, '-still-' + i)
+        p.step = i
+        const stepRoles = roles.cloneNode(true)
+        stepRoles.classList.add('roles-still')
+        const after = step.querySelector('h1, h2')
+        if (i === 0) step.querySelector('.more')?.after(fig)
+        else after.after(fig)
+        if (i === 5) fig.after(stepRoles)
+        return { fig, w, p, stepRoles }
+      })
+    }
+    stills.forEach(({ fig, w, p, stepRoles }, i) => render(i, p, w, fig, el('span'), stepRoles))
+  }
+  renderStills()
+  mobile.addEventListener('change', renderStills)
+  addEventListener('resize', renderStills)
 }
 
 init()

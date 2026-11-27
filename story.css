@@ -173,3 +173,17 @@ main:has(.story){overflow:clip}
   .story-stage{-webkit-mask-image:none;mask-image:none}
   .roles{right:12px;bottom:10px}
 }
+
+/* Phones: no fixed stage. Each step shows a still picture of its frame and the page scrolls normally. */
+.step-still{display:none}
+@media (max-width:900px){
+  .story-stage-wrap{display:none}
+  .story-step,.story-step:first-child,.story-step:last-child{min-height:auto;opacity:1;padding:28px 0 36px}
+  .story-step:first-child{padding-top:36px}
+  .step-still{display:block;position:relative;height:clamp(230px,64vw,340px);margin:20px -18px 18px;background:#f3f5f9;overflow:hidden}
+  .step-still .stage-viewport{inset:0}
+  .story-step:first-child .step-still{height:clamp(170px,48vw,260px)}
+  .step-still *{transition:none !important}
+  .roles.roles-still{position:static;width:100%;opacity:1;transform:none;margin:0 0 18px;box-shadow:none}
+  .story-step .button{margin-top:22px}
+}
