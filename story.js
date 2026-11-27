@@ -35,32 +35,39 @@ const byId = Object.fromEntries(OBJECTS.map((o, i) => [o.id, { ...o, index: i }]
 const colHeight = (o) => HEAD + o.cards.length * (CARD_H + CARD_GAP) - CARD_GAP + PAD
 const cardTop = (o, k) => BOARD_Y + HEAD + k * (CARD_H + CARD_GAP)
 
-// The map of the hero: one card-like node per object, laid out on a grid and joined by
-// right-angled connectors with rounded corners, the way a flow diagram draws them.
-const NODE_W = 172, NODE_H = 64
+// The map of the hero: card-like nodes for the objects and one decision, laid out on a grid and joined by
+// labelled, right-angled connectors with rounded corners, the way a flow diagram draws them.
+const NODE_W = 172, NODE_H = 52, DIAMOND = 108 // diamond = its full width and height
 const NODE_POS = {
-  client: { x: 132, y: 220 }, order: { x: 380, y: 220 }, product: { x: 628, y: 220 }, provider: { x: 876, y: 220 },
-  payment: { x: 380, y: 400 },
+  client: { x: 132, y: 220 }, order: { x: 390, y: 220 }, product: { x: 648, y: 220 }, stock: { x: 880, y: 220 },
+  provider: { x: 1110, y: 220 }, payment: { x: 390, y: 400 },
 }
+const DECISIONS = [{ id: 'stock', label: 'In stock?' }]
 const nodePos = (id) => NODE_POS[id]
-// [from, fromSide, to, toSide]
+const isDecision = (id) => DECISIONS.some((d) => d.id === id)
+// [from, fromSide, to, toSide, label]
 const MAP_LINKS = [
-  ['client', 'right', 'order', 'left'], ['order', 'right', 'product', 'left'], ['product', 'right', 'provider', 'left'],
-  ['order', 'bottom', 'payment', 'top'], ['client', 'bottom', 'payment', 'left'],
+  ['client', 'right', 'order', 'left', 'places'],
+  ['order', 'right', 'product', 'left', 'includes'],
+  ['product', 'right', 'stock', 'left', ''],
+  ['stock', 'right', 'provider', 'left', 'No: reorder from'],
+  ['order', 'bottom', 'payment', 'top', 'paid with'],
+  ['client', 'bottom', 'payment', 'left', 'makes'],
 ]
 function anchor(id, side) {
-  const p = nodePos(id)
-  return { x: p.x + (side === 'right' ? NODE_W / 2 : side === 'left' ? -NODE_W / 2 : 0), y: p.y + (side === 'bottom' ? NODE_H / 2 : side === 'top' ? -NODE_H / 2 : 0), side }
+  const p = nodePos(id), hw = isDecision(id) ? DIAMOND / 2 : NODE_W / 2, hh = isDecision(id) ? DIAMOND / 2 : NODE_H / 2
+  return { x: p.x + (side === 'right' ? hw : side === 'left' ? -hw : 0), y: p.y + (side === 'bottom' ? hh : side === 'top' ? -hh : 0), side }
 }
 // Smooth step: straight runs with one rounded corner (or none when the ends line up).
+// Returns the path and where its label sits (the middle of the run that carries the reading).
 function smoothStep(a, b, r = 14) {
-  if (a.x === b.x || a.y === b.y) return `M${a.x} ${a.y} L${b.x} ${b.y}`
+  if (a.x === b.x || a.y === b.y) return { d: `M${a.x} ${a.y} L${b.x} ${b.y}`, label: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 } }
   const verticalFirst = a.side === 'bottom' || a.side === 'top'
   const cx = verticalFirst ? a.x : b.x, cy = verticalFirst ? b.y : a.y
   const sx = Math.sign(b.x - a.x), sy = Math.sign(b.y - a.y)
   return verticalFirst
-    ? `M${a.x} ${a.y} L${cx} ${cy - sy * r} Q${cx} ${cy} ${cx + sx * r} ${cy} L${b.x} ${b.y}`
-    : `M${a.x} ${a.y} L${cx - sx * r} ${cy} Q${cx} ${cy} ${cx} ${cy + sy * r} L${b.x} ${b.y}`
+    ? { d: `M${a.x} ${a.y} L${cx} ${cy - sy * r} Q${cx} ${cy} ${cx + sx * r} ${cy} L${b.x} ${b.y}`, label: { x: (cx + b.x) / 2, y: cy } }
+    : { d: `M${a.x} ${a.y} L${cx - sx * r} ${cy} Q${cx} ${cy} ${cx} ${cy + sy * r} L${b.x} ${b.y}`, label: { x: (a.x + cx) / 2, y: cy } }
 }
 
 // When each piece appears (step index). Steps: 0 map, 1 name, 2 fill, 3 nest, 4 board, 5 actions, 6 views, 7 screens.
@@ -74,7 +81,7 @@ function cardFrom(objectId, card) {
 // Camera: the world rectangle each step frames.
 const productCol = { x: colX(2), w: COL_W }, orderCol = { x: colX(1) }
 const CAMERA = [
-  { x: 10, y: 140, w: 1000, h: 330 },
+  { x: 30, y: 150, w: 960, h: 300 },
   { x: productCol.x - 70, y: BOARD_Y - 50, w: COL_W + 140, h: 200 },
   { x: productCol.x - 80, y: BOARD_Y - 30, w: COL_W + 160, h: 380 },
   { x: orderCol.x - 50, y: BOARD_Y - 30, w: productCol.x + COL_W - orderCol.x + 100, h: 400 },
@@ -109,22 +116,30 @@ function build(world) {
   // Map lines + nodes
   const lines = svg('map-lines')
   lines.innerHTML = '<defs><marker id="map-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 1 L9 5 L0 9 z" fill="#9aa7bd"/></marker></defs>'
-  for (const [a, as, b, bs] of MAP_LINKS) {
-    const path = document.createElementNS(svgNS, 'path')
-    path.setAttribute('d', smoothStep(anchor(a, as), anchor(b, bs)))
+  const nodes = {}
+  MAP_LINKS.forEach(([a, as, b, bs, text], i) => {
+    const path = document.createElementNS(svgNS, 'path'), step = smoothStep(anchor(a, as), anchor(b, bs))
+    path.setAttribute('d', step.d)
     path.setAttribute('marker-end', 'url(#map-arrow)')
     lines.append(path)
-  }
+    if (text) {
+      const label = el('div', 'map-label', text)
+      label.style.left = step.label.x + 'px'; label.style.top = step.label.y + 'px'
+      nodes['label-' + i] = label
+    }
+  })
   world.append(lines)
-  const nodes = {}
-  const kinds = ['attribute', 'metadata', 'cta', 'nested']
   for (const o of OBJECTS) {
-    const counts = kinds.map((k) => o.cards.filter((c) => c[0] === k).length)
-    const n = el('div', 'map-node', `<b>${o.name}</b><span class="chips">${counts.map((c, i) => `<i class="${kinds[i]}" style="flex:${c || 0.4}"></i>`).join('')}</span>`)
-    const p = nodePos(o.id)
+    const n = el('div', 'map-node', `<b>${o.name}</b>`), p = nodePos(o.id)
     n.style.left = p.x + 'px'; n.style.top = p.y + 'px'
     world.append(n); nodes[o.id] = n
   }
+  for (const d of DECISIONS) {
+    const n = el('div', 'map-decision', `<span>${d.label}</span>`), p = nodePos(d.id)
+    n.style.left = p.x + 'px'; n.style.top = p.y + 'px'
+    world.append(n); nodes[d.id] = n
+  }
+  for (const [k, n] of Object.entries(nodes)) if (k.startsWith('label-')) world.append(n)
 
   // Links from each nested card to the object it refers to (step 4 onward)
   const nestLinks = svg('nest-links')

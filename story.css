@@ -42,14 +42,18 @@ main:has(.story){overflow:clip}
 /* Map */
 .map-lines{position:absolute;left:0;top:0;width:1200px;height:1000px;overflow:visible;pointer-events:none}
 .map-lines path{fill:none;stroke:#9aa7bd;stroke-width:1.6;stroke-linejoin:round}.map-lines{transition:opacity .6s var(--ease)}
-.map-node{position:absolute;width:172px;height:64px;margin:-32px 0 0 -86px;border-radius:10px;background:#fff;border:1px solid #e2e6ee;
-  display:flex;flex-direction:column;justify-content:center;gap:10px;padding:0 14px;color:#111827;
+.map-node{position:absolute;width:172px;height:52px;margin:-26px 0 0 -86px;border-radius:10px;background:#fff;border:1px solid #e2e6ee;
+  display:flex;flex-direction:column;justify-content:center;padding:0 16px;color:#111827;
   box-shadow:0 1px 2px rgba(11,13,18,.05),0 6px 16px rgba(11,13,18,.04);transition:opacity .6s var(--ease),transform var(--t) var(--ease)}
 .map-node b{font-size:15px;font-weight:600;letter-spacing:-.2px}
-.map-node .chips{display:flex;gap:3px;height:5px}
-.map-node .chips i{border-radius:3px;display:block}
-.map-node .chips .attribute{background:var(--amber-bd)}.map-node .chips .metadata{background:var(--rose-bd)}
-.map-node .chips .cta{background:var(--emerald-bd)}.map-node .chips .nested{background:var(--blue-bd)}
+/* A decision: a diamond whose label stays level */
+.map-decision{position:absolute;width:76px;height:76px;margin:-38px 0 0 -38px;transform:rotate(45deg);border-radius:8px;background:#fff;
+  border:1px solid #e2e6ee;box-shadow:0 1px 2px rgba(11,13,18,.05),0 6px 16px rgba(11,13,18,.04);display:flex;align-items:center;justify-content:center;
+  transition:opacity .6s var(--ease)}
+.map-decision span{transform:rotate(-45deg);font-size:12.5px;font-weight:600;color:#111827;white-space:nowrap}
+/* Connector labels sit on the line, on the page colour so the line breaks around them */
+.map-label{position:absolute;transform:translate(-50%,-50%);background:#fbfbfe;padding:2px 7px;font-size:12px;font-weight:500;color:#64748b;
+  white-space:nowrap;transition:opacity .6s var(--ease)}
 .map-node.is-focus{border-color:var(--action);box-shadow:0 0 0 3px rgba(41,76,219,.12),0 6px 16px rgba(11,13,18,.05)}
 
 /* Objects (Board columns) */
@@ -148,7 +152,7 @@ main:has(.story){overflow:clip}
   .story.force-motion .col{transition:left var(--t) var(--ease),top var(--t) var(--ease),width var(--t) var(--ease),height var(--t) var(--ease),opacity .6s var(--ease),background .5s var(--ease),border-color .5s var(--ease),border-radius .5s var(--ease),padding .5s var(--ease)!important}
   .story.force-motion .card{transition:opacity .45s var(--ease),height .45s var(--ease),margin .45s var(--ease),border-width .45s var(--ease),filter .4s var(--ease)!important}
   .story.force-motion .view{transition:left var(--t) var(--ease),top var(--t) var(--ease),width var(--t) var(--ease),height var(--t) var(--ease),opacity .6s var(--ease)!important}
-  .story.force-motion .map-node,.story.force-motion .map-lines,.story.force-motion .nest-links path,.story.force-motion .view-links path,
+  .story.force-motion .map-node,.story.force-motion .map-decision,.story.force-motion .map-label,.story.force-motion .map-lines,.story.force-motion .nest-links path,.story.force-motion .view-links path,
   .story.force-motion .view-label,.story.force-motion .roles,.story.force-motion .screen,.story.force-motion .story-step,
   .story.force-motion .col-head,.story.force-motion .col-cards{transition:opacity .6s var(--ease),transform .6s var(--ease)!important}
   .story.force-motion .screen .extra{transition:opacity .6s var(--ease) .35s!important}
@@ -159,7 +163,7 @@ main:has(.story){overflow:clip}
   padding-left:max(32px,calc((100vw - 1320px)/2));padding-right:0}
 .story-stage-wrap{top:72px;height:calc(100vh - 80px);min-height:480px;margin-top:0}
 .story-stage{border:0;border-radius:0;background:transparent;box-shadow:none;
-  -webkit-mask-image:linear-gradient(to right,transparent 0,#000 56px);mask-image:linear-gradient(to right,transparent 0,#000 56px)}
+  -webkit-mask-image:linear-gradient(to right,transparent 0,#000 24px);mask-image:linear-gradient(to right,transparent 0,#000 24px)}
 .stage-chrome{display:none}
 .stage-viewport{inset:0}
 .roles{right:max(24px,calc((100vw - 1320px)/2));bottom:28px}
