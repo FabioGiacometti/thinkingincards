@@ -47,28 +47,55 @@ const DECISIONS = [{ id: 'stock', label: 'In stock?' }]
 const MAP_ONLY = [{ id: 'shipment', label: 'Shipment' }]
 const nodePos = (id) => NODE_POS[id]
 const isDecision = (id) => DECISIONS.some((d) => d.id === id)
-// [from, fromSide, to, toSide, label]
+// [from, to, label]. Which side a connector leaves and enters by follows where the other box is.
 const MAP_LINKS = [
-  ['client', 'right', 'order', 'left', 'places'],
-  ['order', 'right', 'product', 'left', 'includes'],
-  ['product', 'right', 'stock', 'left', ''],
-  ['stock', 'right', 'shipment', 'left', 'Yes'],
-  ['stock', 'bottom', 'provider', 'top', 'No: reorder from'],
+  ['client', 'order', 'places'],
+  ['order', 'product', 'includes'],
+  ['product', 'stock', ''],
+  ['stock', 'shipment', 'Yes'],
+  ['stock', 'provider', 'No: reorder from'],
 ]
 function anchor(id, side) {
   const p = nodePos(id), hw = isDecision(id) ? DIAMOND / 2 : NODE_W / 2, hh = isDecision(id) ? DIAMOND / 2 : NODE_H / 2
   return { x: p.x + (side === 'right' ? hw : side === 'left' ? -hw : 0), y: p.y + (side === 'bottom' ? hh : side === 'top' ? -hh : 0), side }
 }
-// Smooth step: straight runs with one rounded corner (or none when the ends line up).
-// Returns the path and where its label sits (the middle of the run that carries the reading).
+function sides(from, to) {
+  const a = nodePos(from), b = nodePos(to), dx = b.x - a.x, dy = b.y - a.y
+  return Math.abs(dx) >= Math.abs(dy) ? (dx >= 0 ? ['right', 'left'] : ['left', 'right']) : (dy >= 0 ? ['bottom', 'top'] : ['top', 'bottom'])
+}
+// Smooth step: right-angled runs with rounded corners, like a flow diagram. Returns the path and where its
+// label sits (the middle of the longest run).
 function smoothStep(a, b, r = 14) {
-  if (a.x === b.x || a.y === b.y) return { d: `M${a.x} ${a.y} L${b.x} ${b.y}`, label: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 } }
-  const verticalFirst = a.side === 'bottom' || a.side === 'top'
-  const cx = verticalFirst ? a.x : b.x, cy = verticalFirst ? b.y : a.y
-  const sx = Math.sign(b.x - a.x), sy = Math.sign(b.y - a.y)
-  return verticalFirst
-    ? { d: `M${a.x} ${a.y} L${cx} ${cy - sy * r} Q${cx} ${cy} ${cx + sx * r} ${cy} L${b.x} ${b.y}`, label: { x: (cx + b.x) / 2, y: cy } }
-    : { d: `M${a.x} ${a.y} L${cx - sx * r} ${cy} Q${cx} ${cy} ${cx} ${cy + sy * r} L${b.x} ${b.y}`, label: { x: (a.x + cx) / 2, y: cy } }
+  const horizontal = (side) => side === 'left' || side === 'right'
+  let pts
+  if (horizontal(a.side) && horizontal(b.side)) {
+    const mx = (a.x + b.x) / 2
+    pts = a.y === b.y ? [a, b] : [a, { x: mx, y: a.y }, { x: mx, y: b.y }, b]
+  } else if (!horizontal(a.side) && !horizontal(b.side)) {
+    const my = (a.y + b.y) / 2
+    pts = a.x === b.x ? [a, b] : [a, { x: a.x, y: my }, { x: b.x, y: my }, b]
+  } else {
+    pts = horizontal(a.side) ? [a, { x: b.x, y: a.y }, b] : [a, { x: a.x, y: b.y }, b]
+  }
+  let d = `M${pts[0].x} ${pts[0].y}`
+  for (let i = 1; i < pts.length - 1; i++) {
+    const p = pts[i], prev = pts[i - 1], next = pts[i + 1]
+    const k = Math.min(r, Math.hypot(p.x - prev.x, p.y - prev.y) / 2, Math.hypot(next.x - p.x, next.y - p.y) / 2)
+    const ux = Math.sign(p.x - prev.x), uy = Math.sign(p.y - prev.y), vx = Math.sign(next.x - p.x), vy = Math.sign(next.y - p.y)
+    d += ` L${p.x - ux * k} ${p.y - uy * k} Q${p.x} ${p.y} ${p.x + vx * k} ${p.y + vy * k}`
+  }
+  d += ` L${pts[pts.length - 1].x} ${pts[pts.length - 1].y}`
+  let best = 0, label = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
+  for (let i = 0; i < pts.length - 1; i++) {
+    const len = Math.hypot(pts[i + 1].x - pts[i].x, pts[i + 1].y - pts[i].y)
+    if (len > best) { best = len; label = { x: (pts[i].x + pts[i + 1].x) / 2, y: (pts[i].y + pts[i + 1].y) / 2 } }
+  }
+  return { d, label }
+}
+function routeLink(link) {
+  const [fs, ts] = sides(link.from, link.to), step = smoothStep(anchor(link.from, fs), anchor(link.to, ts))
+  link.path.setAttribute('d', step.d)
+  if (link.label) { link.label.style.left = step.label.x + 'px'; link.label.style.top = step.label.y + 'px' }
 }
 
 // When each piece appears (step index). Steps: 0 map, 1 name, 2 fill, 3 nest, 4 board, 5 actions, 6 views, 7 screens.
@@ -119,33 +146,39 @@ function build(world, uid = '') {
   // Map lines + nodes
   const lines = svg('map-lines')
   lines.innerHTML = `<defs><marker id="map-arrow${uid}" viewBox="0 0 10 10" refX="9.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0.8 L10 5 L0 9.2 L2.2 5 z"/></marker></defs>`
-  const nodes = {}
-  MAP_LINKS.forEach(([a, as, b, bs, text], i) => {
-    const path = document.createElementNS(svgNS, 'path'), step = smoothStep(anchor(a, as), anchor(b, bs))
-    path.setAttribute('d', step.d)
+  const nodes = {}, mapLinks = []
+  const addLink = (from, to, text) => {
+    const path = document.createElementNS(svgNS, 'path')
     path.setAttribute('marker-end', `url(#map-arrow${uid})`)
     lines.append(path)
+    const link = { from, to, path, label: null }
     if (text) {
-      const label = el('div', 'map-label', text)
-      label.style.left = step.label.x + 'px'; label.style.top = step.label.y + 'px'
-      nodes['label-' + i] = label
+      link.label = el('div', 'map-label', text)
+      nodes['label-' + mapLinks.length] = link.label
     }
-  })
+    mapLinks.push(link)
+    routeLink(link)
+    return link
+  }
+  MAP_LINKS.forEach(([a, b, text]) => addLink(a, b, text))
   world.append(lines)
   for (const o of OBJECTS) {
     if (!nodePos(o.id)) continue // objects left out of the hero map (Payment)
     if (o.id === 'product') continue // drawn by the Product column itself, so the node can grow into it
     const n = el('div', 'map-node', `<b>${o.name}</b>`), p = nodePos(o.id)
+    n.dataset.mapId = o.id
     n.style.left = p.x + 'px'; n.style.top = p.y + 'px'
     world.append(n); nodes[o.id] = n
   }
   for (const m of MAP_ONLY) {
     const n = el('div', 'map-node', `<b>${m.label}</b>`), p = nodePos(m.id)
+    n.dataset.mapId = m.id
     n.style.left = p.x + 'px'; n.style.top = p.y + 'px'
     world.append(n); nodes[m.id] = n
   }
   for (const d of DECISIONS) {
     const n = el('div', 'map-decision', `<span>${d.label}</span>`), p = nodePos(d.id)
+    n.dataset.mapId = d.id
     n.style.left = p.x + 'px'; n.style.top = p.y + 'px'
     world.append(n); nodes[d.id] = n
   }
@@ -230,7 +263,102 @@ function build(world, uid = '') {
   screens.checkout.append(pay, place); extras.push(pay, place)
   world.prepend(screens.orders, screens.checkout)
 
-  return { lines, nodes, nestLinks, cols, cards, ghost, flyer, viewLinks, labels, views, screens, extras }
+  cols.product.dataset.mapId = 'product' // in the hero the Product column is the Product box of the map
+  return { lines, nodes, nestLinks, cols, cards, ghost, flyer, viewLinks, labels, views, screens, extras, mapLinks, addLink }
+}
+
+// The hero map can be touched: hover a box to see its connectors, drag it around, or pull a new connector
+// from its handle to another box. Only on the live stage, only while the hero is on screen. Nothing is saved.
+function makeMapInteractive(parts, world, stage) {
+  const handle = el('div', 'map-handle')
+  handle.title = 'Drag to connect'
+  world.append(handle)
+  const temp = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+  temp.setAttribute('class', 'map-temp')
+  parts.lines.append(temp)
+  const elOf = (id) => (id === 'product' ? parts.cols.product : parts.nodes[id])
+  const scale = () => world.getBoundingClientRect().width / 1200
+  const toWorld = (e) => { const r = world.getBoundingClientRect(), k = scale(); return { x: (e.clientX - r.left) / k, y: (e.clientY - r.top) / k } }
+  const live = () => parts.step === 0
+  let hot = null, drag = null, connect = null
+
+  const setHot = (id) => {
+    if (hot === id) return
+    if (hot) elOf(hot)?.classList.remove('is-hot')
+    hot = id
+    for (const l of parts.mapLinks) {
+      const on = !!id && (l.from === id || l.to === id)
+      l.path.classList.toggle('is-hot', on)
+      l.label?.classList.toggle('is-hot', on)
+    }
+    if (id) {
+      elOf(id).classList.add('is-hot')
+      const a = anchor(id, 'right')
+      Object.assign(handle.style, { left: a.x + 'px', top: a.y + 'px' })
+    }
+    handle.classList.toggle('is-on', !!id)
+  }
+  const place = (id) => {
+    const p = nodePos(id), n = elOf(id)
+    if (id === 'product') Object.assign(n.style, { left: p.x - NODE_W / 2 + 'px', top: p.y - NODE_H / 2 + 'px' })
+    else Object.assign(n.style, { left: p.x + 'px', top: p.y + 'px' })
+    for (const l of parts.mapLinks) if (l.from === id || l.to === id) routeLink(l)
+    if (hot === id) { const a = anchor(id, 'right'); Object.assign(handle.style, { left: a.x + 'px', top: a.y + 'px' }) }
+  }
+
+  world.addEventListener('pointerover', (e) => {
+    if (!live() || drag || connect) return
+    if (e.target.closest('.map-handle')) return
+    setHot(e.target.closest('[data-map-id]')?.dataset.mapId ?? null)
+  })
+  world.addEventListener('pointerleave', () => { if (!drag && !connect) setHot(null) })
+
+  world.addEventListener('pointerdown', (e) => {
+    if (!live() || e.button > 0) return
+    if (e.target.closest('.map-handle') && hot) {
+      e.preventDefault()
+      connect = { from: hot }
+      try { handle.setPointerCapture(e.pointerId) } catch {}
+      stage.classList.add('is-connecting')
+      return
+    }
+    const box = e.target.closest('[data-map-id]')
+    if (!box) return
+    e.preventDefault()
+    const id = box.dataset.mapId, start = toWorld(e), p = nodePos(id)
+    drag = { id, box, dx: start.x - p.x, dy: start.y - p.y }
+    box.classList.add('is-dragging')
+    try { box.setPointerCapture(e.pointerId) } catch {}
+  })
+  world.addEventListener('pointermove', (e) => {
+    if (drag) {
+      const w = toWorld(e)
+      NODE_POS[drag.id] = { x: Math.round(w.x - drag.dx), y: Math.round(w.y - drag.dy) }
+      place(drag.id)
+    } else if (connect) {
+      const a = anchor(connect.from, 'right'), w = toWorld(e)
+      temp.setAttribute('d', `M${a.x} ${a.y} L${w.x} ${w.y}`)
+      const over = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-map-id]')?.dataset.mapId
+      for (const id of Object.keys(NODE_POS)) elOf(id)?.classList.toggle('is-target', id === over && id !== connect.from)
+    }
+  })
+  const end = (e) => {
+    if (drag) {
+      drag.box.classList.remove('is-dragging')
+      drag = null
+    }
+    if (connect) {
+      const to = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-map-id]')?.dataset.mapId
+      const exists = parts.mapLinks.some((l) => (l.from === connect.from && l.to === to) || (l.to === connect.from && l.from === to))
+      if (to && to !== connect.from && !exists) parts.addLink(connect.from, to, '').path.classList.add('is-new')
+      for (const id of Object.keys(NODE_POS)) elOf(id)?.classList.remove('is-target')
+      temp.setAttribute('d', '')
+      stage.classList.remove('is-connecting')
+      connect = null
+    }
+  }
+  world.addEventListener('pointerup', end)
+  world.addEventListener('pointercancel', end)
 }
 
 function render(step, parts, world, stage, chromeCrumb, roles) {
@@ -319,6 +447,7 @@ function init() {
   addEventListener('resize', syncHeader)
   const parts = build(world)
   parts.step = 0
+  makeMapInteractive(parts, world, stage)
 
   // Reduced motion (without the review switch): fade the stage out, change the frame, fade it back in
   const gentle = () => matchMedia('(prefers-reduced-motion: reduce)').matches && !story.classList.contains('force-motion')

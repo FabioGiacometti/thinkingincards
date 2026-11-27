@@ -195,3 +195,21 @@ main:has(.story){overflow:clip}
   .roles.roles-still{position:static;width:100%;opacity:1;transform:none;margin:0 0 18px;box-shadow:none}
   .story-step .button{margin-top:22px}
 }
+
+/* Hero map: hover, drag and connect (desktop stage only) */
+.world{-webkit-user-select:none;user-select:none}
+.map-node,.map-decision,.col.as-node{cursor:grab;touch-action:none}
+.map-node.is-hot,.col.as-node.is-hot{box-shadow:0 2px 4px rgba(11,13,18,.06),0 12px 28px rgba(11,13,18,.10);border-color:#cfd6e3}
+.col.as-node.is-hot{border-color:var(--action)}
+.map-decision.is-hot{box-shadow:0 2px 4px rgba(11,13,18,.06),0 12px 28px rgba(11,13,18,.10)}
+.map-node.is-dragging,.map-decision.is-dragging,.col.as-node.is-dragging{cursor:grabbing;transition:none !important;z-index:3}
+.map-node.is-target,.map-decision.is-target,.col.as-node.is-target{border-color:var(--action);box-shadow:0 0 0 3px rgba(41,76,219,.18)}
+.map-lines path.is-hot{stroke:var(--action);stroke-width:2}
+.map-lines path.is-new{stroke:var(--action)}
+.map-lines .map-temp{fill:none;stroke:var(--action);stroke-width:1.6;stroke-dasharray:5 5}
+.map-label.is-hot{color:var(--action)}
+.map-handle{position:absolute;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;background:#fff;border:2px solid var(--action);
+  cursor:crosshair;opacity:0;pointer-events:none;z-index:4;transition:opacity .15s ease}
+.map-handle.is-on{opacity:1;pointer-events:auto}
+.map-handle::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--action)}
+.story-stage.is-connecting,.story-stage.is-connecting *{cursor:crosshair !important}
