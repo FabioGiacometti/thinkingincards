@@ -298,6 +298,11 @@ function init() {
   const steps = [...story.querySelectorAll('.story-step')]
   // Review switch: ?motion=1 shows the animation even when the system asks for reduced motion
   if (new URLSearchParams(location.search).has('motion') || location.hash === '#motion') story.classList.add('force-motion')
+  // The header always stays on screen: the stage starts right under it
+  const header = document.querySelector('header')
+  const syncHeader = () => story.style.setProperty('--header-h', `${header ? header.getBoundingClientRect().height : 0}px`)
+  syncHeader()
+  addEventListener('resize', syncHeader)
   const parts = build(world)
   parts.step = 0
 

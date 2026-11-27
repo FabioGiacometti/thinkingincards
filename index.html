@@ -30,4 +30,4 @@ const video=document.querySelector('#product-film');const reduced=window.matchMe
 const heroCta=document.querySelector('.hero .intro a[href="#film"]');
 heroCta?.addEventListener('click',e=>{e.preventDefault();video.scrollIntoView({behavior:reduced.matches?'auto':'smooth',block:'center'});if(location.hash!=='#film')history.pushState(null,'','#film');});if(!reduced.matches){const observer=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){video.play().catch(()=>{});}else{video.pause();}})},{threshold:.35});observer.observe(video);video.addEventListener('pointerdown',()=>observer.disconnect(),{once:true});video.addEventListener('keydown',()=>observer.disconnect(),{once:true});}
 
-</script><script type="module" src="logo.js"></script><script type="module" src="header.js"></script><script type="module" src="/main.js"></script></body></html>
+</script><script type="module" src="logo.js"></script><script type="module" src="/main.js"></script></body></html>
