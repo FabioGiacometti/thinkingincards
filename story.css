@@ -82,7 +82,7 @@ main:has(.story){overflow:clip}
 .col.as-nested .col-cards{opacity:0}
 .col.as-nested .col-head{height:30px;font-size:12.5px;font-weight:500;color:var(--blue-ink)}
 .col.as-nested .col-head span{color:var(--blue-ink);opacity:.7}
-.nest-links path{fill:none;stroke:#93c5fd;stroke-width:1.6;transition:opacity .6s var(--ease)}
+.nest-links path{fill:none;stroke:#93c5fd;stroke-width:1.6;stroke-linejoin:round;transition:opacity .6s var(--ease)}.nest-links marker path{fill:#93c5fd;stroke:none}
 
 /* Focus modes */
 .world.mode-actions .card:not(.cta){filter:saturate(.3);opacity:.28}

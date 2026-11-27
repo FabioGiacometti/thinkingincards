@@ -77,6 +77,15 @@ function smoothStep(a, b, r = 14) {
   } else {
     pts = horizontal(a.side) ? [a, { x: b.x, y: a.y }, b] : [a, { x: a.x, y: b.y }, b]
   }
+  const d = roundedPath(pts, r)
+  let best = 0, label = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
+  for (let i = 0; i < pts.length - 1; i++) {
+    const len = Math.hypot(pts[i + 1].x - pts[i].x, pts[i + 1].y - pts[i].y)
+    if (len > best) { best = len; label = { x: (pts[i].x + pts[i + 1].x) / 2, y: (pts[i].y + pts[i + 1].y) / 2 } }
+  }
+  return { d, label }
+}
+function roundedPath(pts, r = 14) {
   let d = `M${pts[0].x} ${pts[0].y}`
   for (let i = 1; i < pts.length - 1; i++) {
     const p = pts[i], prev = pts[i - 1], next = pts[i + 1]
@@ -84,13 +93,18 @@ function smoothStep(a, b, r = 14) {
     const ux = Math.sign(p.x - prev.x), uy = Math.sign(p.y - prev.y), vx = Math.sign(next.x - p.x), vy = Math.sign(next.y - p.y)
     d += ` L${p.x - ux * k} ${p.y - uy * k} Q${p.x} ${p.y} ${p.x + vx * k} ${p.y + vy * k}`
   }
-  d += ` L${pts[pts.length - 1].x} ${pts[pts.length - 1].y}`
-  let best = 0, label = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
-  for (let i = 0; i < pts.length - 1; i++) {
-    const len = Math.hypot(pts[i + 1].x - pts[i].x, pts[i + 1].y - pts[i].y)
-    if (len > best) { best = len; label = { x: (pts[i].x + pts[i + 1].x) / 2, y: (pts[i].y + pts[i + 1].y) / 2 } }
+  return d + ` L${pts[pts.length - 1].x} ${pts[pts.length - 1].y}`
+}
+// From a nested card to the object it refers to: out through the gap beside the column, then into the
+// object's header from the side (next column) or over the top of the board (further away).
+function nestRoute(fromIndex, cardY, toIndex) {
+  const a = { x: colX(fromIndex) + COL_W - 10, y: cardY }, gapX = colX(fromIndex) + COL_W + GAP / 2
+  if (toIndex === fromIndex + 1) {
+    const b = { x: colX(toIndex), y: BOARD_Y + HEAD / 2 }
+    return roundedPath([a, { x: gapX, y: a.y }, { x: gapX, y: b.y }, b], 10)
   }
-  return { d, label }
+  const overY = BOARD_Y - 26, tx = colX(toIndex) + COL_W / 2
+  return roundedPath([a, { x: gapX, y: a.y }, { x: gapX, y: overY }, { x: tx, y: overY }, { x: tx, y: BOARD_Y }], 10)
 }
 function routeLink(link) {
   const [fs, ts] = sides(link.from, link.to), step = smoothStep(anchor(link.from, fs), anchor(link.to, ts))
@@ -186,6 +200,7 @@ function build(world, uid = '') {
 
   // Links from each nested card to the object it refers to (step 4 onward)
   const nestLinks = svg('nest-links')
+  nestLinks.innerHTML = `<defs><marker id="nest-arrow${uid}" viewBox="0 0 10 10" refX="9.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0.8 L10 5 L0 9.2 L2.2 5 z"/></marker></defs>`
   world.append(nestLinks)
 
   // Columns
@@ -200,11 +215,9 @@ function build(world, uid = '') {
       node.dataset.from = cardFrom(o.id, card)
       list.append(node); cards.push(node)
       if (type === 'nested') {
-        const target = byId[card[3]], y = cardTop(o, k) + CARD_H / 2, x1 = colX(byId[o.id].index) + COL_W - 10
-        const tx = colX(target.index) + COL_W / 2, ty = BOARD_Y - 2
         const p = document.createElementNS(svgNS, 'path')
-        const mid = (x1 + tx) / 2
-        p.setAttribute('d', `M${x1} ${y} C ${mid} ${y}, ${tx} ${ty - 60}, ${tx} ${ty}`)
+        p.setAttribute('d', nestRoute(byId[o.id].index, cardTop(o, k) + CARD_H / 2, byId[card[3]].index))
+        p.setAttribute('marker-end', `url(#nest-arrow${uid})`)
         nestLinks.append(p)
       }
     })
