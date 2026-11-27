@@ -244,4 +244,4 @@ main:has(.story){overflow:clip}
 @media (prefers-reduced-motion:reduce){.story:not(.force-motion) .sticky{animation:none !important}}
 .sticky span{display:block;font:700 9.5px/1 "Helvetica Neue",Helvetica,Arial,sans-serif;letter-spacing:1.2px;text-transform:uppercase;opacity:.6;margin-bottom:8px}
 .sticky p{margin:0;font:500 13.5px/1.35 "Helvetica Neue",Helvetica,Arial,sans-serif;color:#1f2937}
-.sticky-yellow{background:#fef3c7}.sticky-pink{background:#fce7f3}.sticky-blue{background:#dbeafe}.sticky-green{background:#dcfce7}
+.sticky-yellow{background:#fef3c7}.sticky-pink{background:#fce7f3}.sticky-blue{background:#dbeafe}.sticky-green{background:#dcfce7}.sticky-purple{background:#ede9fe}

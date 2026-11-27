@@ -128,6 +128,7 @@ const STICKIES = [
   { who: 'Designer', text: 'Payment shows inside the Order. Does it need a page of its own?', color: 'pink', x: 270, y: 452, tilt: 1.8 },
   { who: 'Engineer', text: 'Is Stock per Product, or per warehouse?', color: 'blue', x: 520, y: 486, tilt: -1.2 },
   { who: 'Operations', text: 'Lead time decides when we reorder from a Provider.', color: 'green', x: 760, y: 378, tilt: 2.2 },
+  { who: 'Finance', text: 'Can we refund part of a Payment, or only all of it?', color: 'purple', x: 990, y: 384, tilt: -1.8 },
 ]
 
 // Camera: the world rectangle each step frames.
