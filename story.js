@@ -311,9 +311,12 @@ function build(world, uid = '') {
     const label = el('div', 'matrix-role', role); Object.assign(label.style, { top: top + ROW_H / 2 + 'px' })
     matrix.append(line, label)
     for (const o of OBJECTS) {
-      const ctas = o.cards.filter((c) => c[0] === 'cta' && (PERMISSIONS[c[1]] || []).includes(role))
+      const ctas = o.cards.filter((c) => c[0] === 'cta')
       if (!ctas.length) continue
-      const cell = el('div', 'matrix-cell', ctas.map((c) => `<div class="card cta">${c[1]}</div>`).join(''))
+      const allowed = (c) => (PERMISSIONS[c[1]] || []).includes(role)
+      const cell = el('div', 'matrix-cell', ctas.map((c) => allowed(c)
+        ? `<div class="card cta">${c[1]}</div>`
+        : `<div class="card cta-denied" title="${role} cannot ${c[1].toLowerCase()}">${c[1]}</div>`).join(''))
       Object.assign(cell.style, { left: colX(byId[o.id].index) + 10 + 'px', top: top + 8 + 'px', width: COL_W - 20 + 'px' })
       matrix.append(cell)
     }

@@ -23,8 +23,15 @@ main:has(.story){overflow:clip}
 .story-step .button{margin-top:28px;align-self:flex-start;width:auto}
 .story-step .more{margin-top:18px;font-size:14px;color:var(--muted)}
 .story-step .more a{color:inherit}
-.story-step{opacity:.35;transition:opacity .4s var(--ease)}
-.story-step.is-active{opacity:1}
+/* Steps out of focus are quieter. Their colour changes rather than their opacity: fading text with
+   opacity makes Windows draw it heavier until the fade ends, so it looked bold, then light. */
+@media (min-width:901px){
+  .story-step :is(h1,h2,p,.num,.eyebrow){transition:color .4s var(--ease)}
+  .story-step:not(.is-active) :is(h1,h2){color:#c3c9d4}
+  .story-step:not(.is-active) :is(p,.eyebrow){color:#cfd4dc}
+  .story-step:not(.is-active) .num{color:#b9c4ec}
+  .story-step:not(.is-active) .dot{background:#b9c4ec}
+}
 
 /* Stage */
 .story-stage-wrap{position:sticky;top:max(96px,calc(50vh - 300px));height:min(600px,calc(100vh - 140px));min-height:420px;align-self:start;margin-top:24px;z-index:1}
@@ -282,3 +289,6 @@ main:has(.story){overflow:clip}
 .matrix-role{position:absolute;left:-160px;transform:translateY(-50%);font:600 14px/1 "Helvetica Neue",Helvetica,Arial,sans-serif;color:#111827}
 .matrix-cell{position:absolute;display:flex;flex-direction:column;gap:6px}
 .matrix-cell .card{opacity:1;height:30px}
+
+/* Step 05: actions a role cannot take stay in the cell, greyed out */
+.card.cta-denied{background:#f3f4f6;border-color:#d1d5db;color:#9ca3af}
