@@ -72,6 +72,11 @@ main:has(.story){overflow:clip}
 .card.nested{background:var(--blue-bg);border-color:var(--blue-bd);color:var(--blue-ink)}
 .card.is-hidden{opacity:0;height:0;margin-top:-6px;border-width:0}
 .ghost-card{color:#64748b;border:1px dashed #cbd5e1;background:transparent;justify-content:center;font-weight:500}
+/* In the hero, the Product column is drawn as the Product node of the map; it then grows into its column */
+.col{overflow:hidden}
+.col.as-node{padding:0 16px;border-color:var(--action);box-shadow:0 0 0 3px rgba(41,76,219,.12),0 6px 16px rgba(11,13,18,.05)}
+.col.as-node .col-head{height:50px;font-size:15px;letter-spacing:-.2px}
+.col.as-node .col-head span,.col.as-node .col-cards{opacity:0}
 /* The copy of an object that shrinks into a nested card */
 .col.as-nested{background:var(--blue-bg);border-color:var(--blue-bd);border-radius:6px;padding:0 9px}
 .col.as-nested .col-cards{opacity:0}

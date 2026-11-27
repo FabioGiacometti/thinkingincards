@@ -72,7 +72,8 @@ function smoothStep(a, b, r = 14) {
 }
 
 // When each piece appears (step index). Steps: 0 map, 1 name, 2 fill, 3 nest, 4 board, 5 actions, 6 views, 7 screens.
-const columnFrom = { product: 1, order: 3, client: 4, provider: 4, payment: 4 }
+// Product is on stage from the start: in the hero it IS the Product node of the map, and it grows into its column.
+const columnFrom = { product: 0, order: 3, client: 4, provider: 4, payment: 4 }
 function cardFrom(objectId, card) {
   if (objectId === 'product') return card[0] === 'nested' ? 4 : 2
   if (objectId === 'order') return card[0] === 'nested' ? (card[3] === 'product' ? 3 : 4) : 3
@@ -133,6 +134,7 @@ function build(world, uid = '') {
   world.append(lines)
   for (const o of OBJECTS) {
     if (!nodePos(o.id)) continue // objects left out of the hero map (Payment)
+    if (o.id === 'product') continue // drawn by the Product column itself, so the node can grow into it
     const n = el('div', 'map-node', `<b>${o.name}</b>`), p = nodePos(o.id)
     n.style.left = p.x + 'px'; n.style.top = p.y + 'px'
     world.append(n); nodes[o.id] = n
@@ -243,9 +245,20 @@ function render(step, parts, world, stage, chromeCrumb, roles) {
   for (const [id, c] of Object.entries(cols)) c.classList.toggle('is-off', step < columnFrom[id])
   for (const card of cards) card.classList.toggle('is-hidden', step < Number(card.dataset.from))
   ghost.style.display = step === 1 ? '' : 'none'
-  for (const c of Object.values(cols)) {
+  for (const [id, c] of Object.entries(cols)) {
     const n = c.querySelectorAll('.card:not(.ghost-card):not(.is-hidden)').length
     c.querySelector('.col-head span').textContent = n === 1 ? '1 card' : `${n} cards`
+    // Explicit geometry so every change of size or place animates (a height of auto cannot)
+    const asNode = id === 'product' && step === 0
+    c.classList.toggle('as-node', asNode)
+    if (asNode) {
+      const p = nodePos('product')
+      Object.assign(c.style, { left: p.x - NODE_W / 2 + 'px', top: p.y - NODE_H / 2 + 'px', width: NODE_W + 'px', height: NODE_H + 'px' })
+    } else {
+      const rows = n + (id === 'product' && step === 1 ? 1 : 0) // the ghost "Add attribute" card
+      const list = rows ? rows * CARD_H + (rows - 1) * CARD_GAP : 0
+      Object.assign(c.style, { left: colX(byId[id].index) + 'px', top: BOARD_Y + 'px', width: COL_W + 'px', height: HEAD + list + PAD + 2 + 'px' })
+    }
   }
   nestLinks.classList.toggle('is-off', step < 4 || step > 5)
 
