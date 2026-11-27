@@ -224,3 +224,12 @@ main:has(.story){overflow:clip}
 .card.is-waiting{opacity:0 !important;transition:none !important}
 /* Phone pictures are pictures */
 .step-still{pointer-events:none}
+
+/* Step 04: the team's notes around the model */
+.sticky{position:absolute;width:176px;padding:12px 14px 14px;border-radius:3px;transform:rotate(var(--tilt,0deg));
+  box-shadow:0 1px 1px rgba(11,13,18,.08),0 10px 22px rgba(11,13,18,.10);color:#1f2937;
+  transition:opacity .45s var(--ease),transform .45s var(--ease);z-index:3}
+.sticky.is-off{transform:rotate(var(--tilt,0deg)) translateY(-10px)}
+.sticky span{display:block;font:700 9.5px/1 "Helvetica Neue",Helvetica,Arial,sans-serif;letter-spacing:1.2px;text-transform:uppercase;opacity:.6;margin-bottom:8px}
+.sticky p{margin:0;font:500 13.5px/1.35 "Helvetica Neue",Helvetica,Arial,sans-serif;color:#1f2937}
+.sticky-yellow{background:#fef3c7}.sticky-pink{background:#fce7f3}.sticky-blue{background:#dbeafe}.sticky-green{background:#dcfce7}

@@ -121,6 +121,15 @@ function cardFrom(objectId, card) {
   return 4
 }
 
+// Step 04: notes from different people on the team, stuck around the model. They illustrate the
+// conversation the shared model starts; the app itself has no comments.
+const STICKIES = [
+  { who: 'Product manager', text: 'Can a Client have more than one open Order?', color: 'yellow', x: 40, y: 448, tilt: -2.5 },
+  { who: 'Designer', text: 'Payment shows inside the Order. Does it need a page of its own?', color: 'pink', x: 270, y: 452, tilt: 1.8 },
+  { who: 'Engineer', text: 'Is Stock per Product, or per warehouse?', color: 'blue', x: 520, y: 486, tilt: -1.2 },
+  { who: 'Operations', text: 'Lead time decides when we reorder from a Provider.', color: 'green', x: 760, y: 378, tilt: 2.2 },
+]
+
 // Camera: the world rectangle each step frames.
 const productCol = { x: colX(2), w: COL_W }, orderCol = { x: colX(1) }
 const CAMERA = [
@@ -128,7 +137,7 @@ const CAMERA = [
   { x: productCol.x - 70, y: BOARD_Y - 50, w: COL_W + 140, h: 200 },
   { x: productCol.x - 80, y: BOARD_Y - 30, w: COL_W + 160, h: 380 },
   { x: orderCol.x - 50, y: BOARD_Y - 30, w: productCol.x + COL_W - orderCol.x + 100, h: 400 },
-  { x: 0, y: 70, w: 1200, h: 450 },
+  { x: 0, y: 80, w: 1200, h: 540 },
   { x: 0, y: 70, w: 1200, h: 450 },
   { x: 40, y: 400, w: 1100, h: 450 },
   { x: 60, y: 540, w: 1070, h: 370 },
@@ -136,7 +145,7 @@ const CAMERA = [
 // On a phone the stage is narrow: frame fewer columns so cards stay readable.
 const CAMERA_MOBILE = {
   0: { x: 40, y: 175, w: 900, h: 250 },
-  4: { x: 10, y: 90, w: 720, h: 420 },
+  4: { x: 10, y: 100, w: 720, h: 530 },
   5: { x: 10, y: 90, w: 720, h: 420 },
   6: { x: 40, y: 560, w: 760, h: 320 },
   7: { x: 60, y: 540, w: 600, h: 370 },
@@ -276,8 +285,14 @@ function build(world, uid = '') {
   screens.checkout.append(pay, place); extras.push(pay, place)
   world.prepend(screens.orders, screens.checkout)
 
+  const stickies = STICKIES.map((n) => {
+    const st = el('div', `sticky sticky-${n.color}`, `<span>${n.who}</span><p>${n.text}</p>`)
+    Object.assign(st.style, { left: n.x + 'px', top: n.y + 'px', '--tilt': n.tilt + 'deg' })
+    world.append(st)
+    return st
+  })
   cols.product.dataset.mapId = 'product' // in the hero the Product column is the Product box of the map
-  return { lines, nodes, nestLinks, cols, cards, ghost, flyer, viewLinks, labels, views, screens, extras, mapLinks, addLink }
+  return { lines, nodes, nestLinks, cols, cards, ghost, flyer, viewLinks, labels, views, screens, extras, mapLinks, addLink, stickies }
 }
 
 // While Product is being filled in, its cards can be put in a different order by dragging them up or down.
@@ -428,7 +443,7 @@ function render(step, parts, world, stage, chromeCrumb, roles) {
       Object.assign(c.style, { left: colX(byId[id].index) + 'px', top: BOARD_Y + 'px', width: COL_W + 'px', height: HEAD + list + PAD + 2 + 'px' })
     }
   }
-  nestLinks.classList.toggle('is-off', step < 4 || step > 5)
+  nestLinks.classList.add('is-off') // the board reads without them
 
   // Product's copy shrinks into Order's nested slot at step 3, then the real nested card takes over.
   const order = byId.order, slot = order.cards.findIndex((c) => c[3] === 'product')
@@ -454,6 +469,7 @@ function render(step, parts, world, stage, chromeCrumb, roles) {
   realSlot.classList.toggle('is-waiting', step === 3 && !flyer.classList.contains('is-off'))
 
   world.classList.toggle('can-sort', step === 2 || step === 3)
+  parts.stickies.forEach((st, i) => { st.classList.toggle('is-off', step !== 4); st.style.transitionDelay = step === 4 ? `${0.35 + i * 0.12}s` : '0s' })
   world.classList.toggle('mode-actions', step === 5)
   world.classList.toggle('mode-dim', step >= 6)
   for (const [id, c] of Object.entries(cols)) c.classList.toggle('is-source', id === 'order')
